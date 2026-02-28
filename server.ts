@@ -121,7 +121,7 @@ async function startServer() {
     const { issueId } = req.params;
     const { progress } = req.body;
 
-    if (process.env.NODE_ENV !== "production" || !JIRA_BASE_URL) {
+    if (!JIRA_BASE_URL) {
       console.log(`[Mock] Updating issue ${issueId} progress to ${progress}%`);
       return res.json({ success: true });
     }
@@ -158,7 +158,7 @@ async function startServer() {
 
   // Get Boards
   app.get("/api/jira/boards", async (req, res) => {
-    if (process.env.NODE_ENV !== "production" || !JIRA_BASE_URL) {
+    if (!JIRA_BASE_URL) {
       return res.json({
         boards: [
           { id: '1', name: 'Agile Board', type: 'scrum' },
@@ -190,7 +190,7 @@ async function startServer() {
   app.get("/api/jira/board-data", async (req, res) => {
     const boardId = req.query.boardId as string || JIRA_BOARD_ID;
     
-    if (process.env.NODE_ENV !== "production" || !JIRA_BASE_URL) {
+    if (!JIRA_BASE_URL) {
       // Return mock data in dev or if not configured
       return res.json({
         sprint: {
