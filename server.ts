@@ -3,6 +3,15 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+// Configure Proxy if HTTPS_PROXY or HTTP_PROXY is set
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+if (proxyUrl) {
+  console.log(`Using proxy: ${proxyUrl}`);
+  const dispatcher = new ProxyAgent(proxyUrl);
+  setGlobalDispatcher(dispatcher);
+}
 
 async function startServer() {
   const app = express();
@@ -157,6 +166,30 @@ async function startServer() {
     }
   });
 
+  // Helper for mock data
+  const getMockData = (boardId: string) => ({
+    sprint: {
+      id: 's1',
+      name: 'Sprint 42 (Mock)',
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      isActive: true,
+    },
+    issues: [
+      { id: 'i1', key: 'PROJ-101', summary: 'Implement Login Page', status: 'todo', estimated: false, assigneeId: 'u1', progress: 0 },
+      { id: 'i2', key: 'PROJ-102', summary: 'Database Schema Design', status: 'todo', estimated: false, assigneeId: 'u2', progress: 0 },
+      { id: 'i3', key: 'PROJ-103', summary: 'User API Endpoint', status: 'in-progress', estimated: true, storyPoints: 5, assigneeId: 'u3', progress: 50 },
+      { id: 'i4', key: 'PROJ-104', summary: 'Landing Page Design', status: 'in-progress', estimated: true, storyPoints: 3, assigneeId: 'u4', progress: 50 },
+      { id: 'i5', key: 'PROJ-105', summary: 'Unit Tests for Auth', status: 'done', estimated: true, storyPoints: 2, assigneeId: 'u1', progress: 100 },
+    ],
+    users: [
+      { id: 'u1', name: 'Alex', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
+      { id: 'u2', name: 'Sarah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
+      { id: 'u3', name: 'Mike', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike' },
+      { id: 'u4', name: 'Emma', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma' },
+    ]
+  });
+
   // Get Boards
   app.get("/api/jira/boards", async (req, res) => {
     if (!JIRA_BASE_URL) {
@@ -165,13 +198,15 @@ async function startServer() {
           { id: '1', name: 'Agile Board', type: 'scrum' },
           { id: '2', name: 'Design Board', type: 'kanban' },
           { id: '3', name: 'Backend Board', type: 'scrum' },
-        ]
+        ],
+        isMock: true
       });
     }
 
     try {
       const response = await fetch(`${JIRA_BASE_URL}/rest/agile/1.0/board`, {
-        headers: getJiraHeaders()
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(5000) // 5s timeout
       });
       const data = await response.json();
       
@@ -184,7 +219,15 @@ async function startServer() {
       res.json({ boards });
     } catch (error) {
       console.error("Jira Boards Error:", error);
-      res.status(500).json({ error: "Failed to fetch boards" });
+      // Fallback to mock data
+      res.json({
+        boards: [
+          { id: '1', name: 'Agile Board (Fallback)', type: 'scrum' },
+          { id: '2', name: 'Design Board (Fallback)', type: 'kanban' },
+        ],
+        isMock: true,
+        warning: "Failed to connect to Jira. Using mock data."
+      });
     }
   });
 
@@ -192,35 +235,14 @@ async function startServer() {
     const boardId = req.query.boardId as string || JIRA_BOARD_ID;
     
     if (!JIRA_BASE_URL) {
-      // Return mock data in dev or if not configured
-      return res.json({
-        sprint: {
-          id: 's1',
-          name: 'Sprint 42',
-          startDate: new Date().toISOString(),
-          endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          isActive: true,
-        },
-        issues: [
-          { id: 'i1', key: 'PROJ-101', summary: 'Implement Login Page', status: 'todo', estimated: false, assigneeId: 'u1', progress: 0 },
-          { id: 'i2', key: 'PROJ-102', summary: 'Database Schema Design', status: 'todo', estimated: false, assigneeId: 'u2', progress: 0 },
-          { id: 'i3', key: 'PROJ-103', summary: 'User API Endpoint', status: 'in-progress', estimated: true, storyPoints: 5, assigneeId: 'u3', progress: 50 },
-          { id: 'i4', key: 'PROJ-104', summary: 'Landing Page Design', status: 'in-progress', estimated: true, storyPoints: 3, assigneeId: 'u4', progress: 50 },
-          { id: 'i5', key: 'PROJ-105', summary: 'Unit Tests for Auth', status: 'done', estimated: true, storyPoints: 2, assigneeId: 'u1', progress: 100 },
-        ],
-        users: [
-          { id: 'u1', name: 'Alex', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
-          { id: 'u2', name: 'Sarah', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' },
-          { id: 'u3', name: 'Mike', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike' },
-          { id: 'u4', name: 'Emma', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma' },
-        ]
-      });
+      return res.json({ ...getMockData(boardId), isMock: true });
     }
 
     try {
       // Fetch active sprint
       const sprintRes = await fetch(`${JIRA_BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=active`, {
-        headers: getJiraHeaders()
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(5000)
       });
       const sprintData = await sprintRes.json();
       const activeSprint = sprintData.values?.[0];
@@ -229,7 +251,8 @@ async function startServer() {
       let issuesData = { values: [] };
       if (activeSprint) {
         const issuesRes = await fetch(`${JIRA_BASE_URL}/rest/agile/1.0/sprint/${activeSprint.id}/issue`, {
-          headers: getJiraHeaders()
+          headers: getJiraHeaders(),
+          signal: AbortSignal.timeout(5000)
         });
         issuesData = await issuesRes.json();
       }
@@ -296,7 +319,12 @@ async function startServer() {
 
     } catch (error) {
       console.error("Jira API Error:", error);
-      res.status(500).json({ error: "Failed to fetch from Jira" });
+      // Fallback to mock data
+      res.json({ 
+        ...getMockData(boardId), 
+        isMock: true,
+        warning: "Failed to connect to Jira. Using mock data."
+      });
     }
   });
 
