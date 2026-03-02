@@ -115,11 +115,7 @@ export const updateIssuePoints = async (issueId: string, points: number) => {
 
     const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `Basic ${Buffer.from(`${config.JIRA.EMAIL}:${config.JIRA.API_TOKEN}`).toString('base64')}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
+      headers: getJiraHeaders(),
       body: JSON.stringify(updateBody)
     });
 
