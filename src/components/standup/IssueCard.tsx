@@ -1,7 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
-import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
 import { PauseCircle, CheckCircle2 } from 'lucide-react';
 
@@ -12,8 +11,7 @@ interface IssueCardProps {
 }
 
 export function IssueCard({ issue, isOverlay }: IssueCardProps) {
-  const { users } = useStore();
-  const assignee = users.find(u => u.id === issue.assigneeId);
+  const assignee = issue.assignee;
 
   const {
     attributes,

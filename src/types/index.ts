@@ -12,6 +12,7 @@ export type Issue = {
   summary: string;
   description?: string;
   assigneeId?: string;
+  assignee?: User;
   status: IssueStatus;
   storyPoints?: number;
   estimated: boolean;

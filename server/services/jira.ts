@@ -134,16 +134,24 @@ export const getBoardData = async (boardId: string) => {
     }
 
     // Map Jira issues to our format
-    const mapJiraIssue = (issue: any, status: string) => ({
-      id: issue.id,
-      key: issue.key,
-      summary: issue.fields.summary,
-      description: issue.fields.description,
-      status: status,
-      estimated: !!issue.fields.customfield_10106,
-      storyPoints: issue.fields.customfield_10106,
-      assigneeId: issue.fields.assignee?.accountId,
-    });
+    const mapJiraIssue = (issue: any, status: string) => {
+      const assignee = issue.fields.assignee;
+      return {
+        id: issue.id,
+        key: issue.key,
+        summary: issue.fields.summary,
+        description: issue.fields.description,
+        status: status,
+        estimated: !!issue.fields.customfield_10106,
+        storyPoints: issue.fields.customfield_10106,
+        assigneeId: assignee?.accountId,
+        assignee: assignee ? {
+          id: assignee.accountId,
+          name: assignee.displayName,
+          avatar: assignee.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(assignee.displayName)}`
+        } : undefined,
+      };
+    };
 
     // Extract unique users
     const usersMap = new Map();
