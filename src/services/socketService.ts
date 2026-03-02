@@ -37,8 +37,8 @@ class SocketService {
     this.socket?.emit("join_room", roomId);
   }
 
-  joinBoard(boardId: string) {
-    this.socket?.emit("join_board", boardId);
+  joinBoard(boardId: string, user: any) {
+    this.socket?.emit("join_board", { boardId, user });
   }
 
   leaveBoard(boardId: string) {
@@ -47,6 +47,10 @@ class SocketService {
 
   updateIssue(boardId: string, issue: any) {
     this.socket?.emit("update_issue", { boardId, issue });
+  }
+
+  updateCurrentIssue(boardId: string, issueId: string) {
+    this.socket?.emit("update_current_issue", { boardId, issueId });
   }
 
   vote(roomId: string, userId: string, points: number) {

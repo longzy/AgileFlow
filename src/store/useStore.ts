@@ -21,8 +21,10 @@ interface AppState {
   votes: Vote[];
   revealed: boolean;
   consensus: number | null;
+  currentIssueId: string | null;
 
   setActiveView: (view: 'planning' | 'standup') => void;
+  setCurrentIssue: (issueId: string | null) => void;
   updateIssueStatus: (id: string, status: IssueStatus) => void;
   updateIssuePoints: (id: string, points: number) => void;
   updateIssueProgress: (id: string, progress: number) => void;
@@ -59,8 +61,17 @@ export const useStore = create<AppState>()(
       votes: [],
       revealed: false,
       consensus: null,
+      currentIssueId: null,
 
       setActiveView: (view) => set({ activeView: view }),
+
+      setCurrentIssue: (issueId) => {
+        set({ currentIssueId: issueId });
+        const { selectedBoard } = get();
+        if (selectedBoard && issueId) {
+          socketService.updateCurrentIssue(selectedBoard.id, issueId);
+        }
+      },
       
       initSocket: () => {
         const { currentUser } = get();
@@ -80,16 +91,21 @@ export const useStore = create<AppState>()(
         });
         
         socketService.on("user_joined", (user: User) => {
-          set(state => {
-            if (state.users.find(u => u.id === user.id)) return state;
-            return { users: [...state.users, user] };
-          });
+          // Deprecated: handled by board_users
+        });
+
+        socketService.on("board_users", (users: User[]) => {
+          set({ users });
         });
 
         socketService.on("issue_updated", (updatedIssue: Issue) => {
           set(state => ({
             issues: state.issues.map(i => i.id === updatedIssue.id ? updatedIssue : i)
           }));
+        });
+
+        socketService.on("current_issue_updated", (issueId: string) => {
+          set({ currentIssueId: issueId });
         });
       },
 
@@ -218,10 +234,10 @@ export const useStore = create<AppState>()(
 
       fetchBoardData: async () => {
         const { selectedBoard, currentUser } = get();
-        if (!selectedBoard) return;
+        if (!selectedBoard || !currentUser) return;
         
         // Join board room
-        socketService.joinBoard(selectedBoard.id);
+        socketService.joinBoard(selectedBoard.id, currentUser);
 
         set({ isLoading: true, error: null });
         try {
@@ -229,18 +245,11 @@ export const useStore = create<AppState>()(
           if (!res.ok) throw new Error('Failed to fetch board data');
           const data = await res.json();
           
-          // If mock data, we might need to adjust it or just use it as is
-          // For real data, it will be filtered by boardId on server
+          // We don't overwrite users with API data anymore, as users are managed by socket
+          // But we might want to keep track of assignees for other purposes if needed
           
-          // Ensure currentUser is in the users list
-          let fetchedUsers = data.users;
-          if (currentUser && !fetchedUsers.find((u: User) => u.id === currentUser.id)) {
-            fetchedUsers = [...fetchedUsers, currentUser];
-          }
-
           set({
-            users: fetchedUsers,
-            // currentUser is set via login
+            // users: fetchedUsers, // Managed by socket
             sprint: data.sprint,
             issues: data.issues,
             isLoading: false

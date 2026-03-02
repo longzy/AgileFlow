@@ -1,10 +1,37 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
+
+interface User {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+interface ConnectedClient {
+  socketId: string;
+  user?: User;
+  boardId?: string;
+}
 
 export function setupSocket(io: Server) {
-  const rooms = new Map(); // roomId -> { votes: [], revealed: false, consensus: null }
+  const rooms = new Map(); // roomId (issueId) -> { votes: [], revealed: false, consensus: null }
+  const clients = new Map<string, ConnectedClient>(); // socketId -> Client Data
 
-  io.on("connection", (socket) => {
+  // Helper to broadcast users in a board
+  const broadcastBoardUsers = (boardId: string) => {
+    const users = Array.from(clients.values())
+      .filter(c => c.boardId === boardId && c.user)
+      .map(c => c.user!);
+    
+    // Deduplicate users by ID (in case same user has multiple tabs open)
+    const uniqueUsersMap = new Map(users.map(u => [u.id, u]));
+    const uniqueUsers = Array.from(uniqueUsersMap.values());
+
+    io.to(`board:${boardId}`).emit("board_users", uniqueUsers);
+  };
+
+  io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
+    clients.set(socket.id, { socketId: socket.id });
 
     socket.on("join_room", (roomId) => {
       socket.join(roomId);
@@ -15,22 +42,52 @@ export function setupSocket(io: Server) {
       socket.emit("room_state", rooms.get(roomId));
     });
 
-    socket.on("join_board", (boardId) => {
+    socket.on("join_board", ({ boardId, user }: { boardId: string, user: User }) => {
+      const client = clients.get(socket.id);
+      if (client) {
+        // If switching boards, leave previous one
+        if (client.boardId && client.boardId !== boardId) {
+          socket.leave(`board:${client.boardId}`);
+          // We will broadcast leave update later
+          const prevBoardId = client.boardId;
+          // Defer broadcast to ensure state is updated
+          setTimeout(() => broadcastBoardUsers(prevBoardId), 100);
+        }
+        
+        client.boardId = boardId;
+        client.user = user;
+      }
+
       const roomName = `board:${boardId}`;
       socket.join(roomName);
-      console.log(`User ${socket.id} joined board ${boardId}`);
+      console.log(`User ${user.name} (${socket.id}) joined board ${boardId}`);
+      
+      // Broadcast updated user list to this board
+      broadcastBoardUsers(boardId);
     });
 
     socket.on("leave_board", (boardId) => {
       const roomName = `board:${boardId}`;
       socket.leave(roomName);
+      
+      const client = clients.get(socket.id);
+      if (client && client.boardId === boardId) {
+        client.boardId = undefined;
+      }
+      
       console.log(`User ${socket.id} left board ${boardId}`);
+      broadcastBoardUsers(boardId);
     });
 
     socket.on("update_issue", ({ boardId, issue }) => {
       const roomName = `board:${boardId}`;
       // Broadcast to everyone in the board room EXCEPT the sender
       socket.to(roomName).emit("issue_updated", issue);
+    });
+
+    socket.on("update_current_issue", ({ boardId, issueId }) => {
+      const roomName = `board:${boardId}`;
+      socket.to(roomName).emit("current_issue_updated", issueId);
     });
 
     socket.on("vote", ({ roomId, userId, points }) => {
@@ -74,13 +131,21 @@ export function setupSocket(io: Server) {
       io.to(roomId).emit("room_state", room);
     });
     
-    // Sync user presence (simple version)
+    // Sync user presence (simple version) - DEPRECATED in favor of join_board
     socket.on("user_joined", (user) => {
-      socket.broadcast.emit("user_joined_broadcast", user);
+      // socket.broadcast.emit("user_joined_broadcast", user);
     });
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
+      const client = clients.get(socket.id);
+      if (client && client.boardId) {
+        const boardId = client.boardId;
+        clients.delete(socket.id); // Remove client
+        broadcastBoardUsers(boardId); // Notify others
+      } else {
+        clients.delete(socket.id);
+      }
     });
   });
 }

@@ -1,21 +1,27 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { IssueList } from './IssueList';
 import { EstimationBoard } from './EstimationBoard';
 
 export function PlanningView() {
-  const { issues } = useStore();
+  const { issues, currentIssueId, setCurrentIssue } = useStore();
   const backlogIssues = issues.filter(i => !i.estimated);
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(backlogIssues[0]?.id || null);
+  
+  // Set initial selected issue if none selected
+  useEffect(() => {
+    if (!currentIssueId && backlogIssues.length > 0) {
+      setCurrentIssue(backlogIssues[0].id);
+    }
+  }, [currentIssueId, backlogIssues, setCurrentIssue]);
 
-  const selectedIssue = issues.find(i => i.id === selectedIssueId) || null;
+  const selectedIssue = issues.find(i => i.id === currentIssueId) || null;
 
   return (
     <div className="flex-1 flex overflow-hidden">
       <IssueList 
         issues={backlogIssues} 
-        selectedId={selectedIssueId} 
-        onSelect={setSelectedIssueId} 
+        selectedId={currentIssueId} 
+        onSelect={setCurrentIssue} 
       />
       <div className="flex-1 bg-white p-8 overflow-y-auto">
         {selectedIssue ? (
