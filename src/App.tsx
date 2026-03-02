@@ -13,7 +13,13 @@ import { useStore } from './store/useStore';
 import { LogOut } from 'lucide-react';
 
 export default function App() {
-  const { activeView, fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard } = useStore();
+  const { activeView, fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket } = useStore();
+
+  useEffect(() => {
+    if (currentUser) {
+      initSocket();
+    }
+  }, [currentUser, initSocket]);
 
   useEffect(() => {
     if (selectedBoard) {

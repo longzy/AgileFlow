@@ -26,6 +26,13 @@ class SocketService {
     });
   }
 
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+
   joinRoom(roomId: string) {
     this.socket?.emit("join_room", roomId);
   }
