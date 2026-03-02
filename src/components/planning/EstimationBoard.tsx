@@ -49,8 +49,8 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
             </span>
           )}
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">{issue.summary}</h2>
-        {issue.description && <p className="text-slate-500">{issue.description}</p>}
+        <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">{issue.summary}</h2>
+        {issue.description && <p className="text-sm text-slate-500 whitespace-pre-wrap">{issue.description}</p>}
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center mb-12 w-full">
