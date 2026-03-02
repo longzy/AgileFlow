@@ -9,7 +9,6 @@ interface AppState {
   currentUser: User | null;
   sprint: Sprint | null;
   issues: Issue[];
-  activeView: 'planning' | 'standup';
   isLoading: boolean;
   error: string | null;
   
@@ -24,7 +23,6 @@ interface AppState {
   currentIssueId: string | null;
   hostId: string | null;
 
-  setActiveView: (view: 'planning' | 'standup') => void;
   setCurrentIssue: (issueId: string | null) => void;
   updateIssueStatus: (id: string, status: IssueStatus) => void;
   updateIssuePoints: (id: string, points: number) => void;
@@ -53,7 +51,6 @@ export const useStore = create<AppState>()(
       currentUser: null,
       sprint: null,
       issues: [],
-      activeView: 'planning',
       isLoading: false,
       error: null,
       
@@ -65,8 +62,6 @@ export const useStore = create<AppState>()(
       consensus: null,
       currentIssueId: null,
       hostId: null,
-
-      setActiveView: (view) => set({ activeView: view }),
 
       setCurrentIssue: (issueId) => {
         set({ currentIssueId: issueId });

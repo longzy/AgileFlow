@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/layout/Sidebar';
 import { PlanningView } from './components/planning/PlanningView';
 import { StandupView } from './components/standup/StandupView';
@@ -13,7 +14,8 @@ import { useStore } from './store/useStore';
 import { LogOut } from 'lucide-react';
 
 export default function App() {
-  const { activeView, fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket, logout } = useStore();
+  const { fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket, logout } = useStore();
+  const location = useLocation();
 
   useEffect(() => {
     if (currentUser) {
@@ -46,6 +48,8 @@ export default function App() {
     );
   }
 
+  const isStandup = location.pathname === '/standup';
+
   return (
     <div className="flex h-screen w-full bg-white text-gray-800 overflow-hidden font-sans selection:bg-gray-900/10">
       {/* Background decoration - subtle or removed for cleaner look */}
@@ -58,7 +62,7 @@ export default function App() {
       <main className="flex-1 flex flex-col relative z-10 bg-white">
         <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {activeView === 'planning' ? 'Planning' : 'Standup'}
+            {isStandup ? 'Standup' : 'Planning'}
           </h2>
           <div className="ml-auto flex items-center gap-2">
             <button
@@ -78,7 +82,11 @@ export default function App() {
           </div>
         </header>
         
-        {activeView === 'planning' ? <PlanningView /> : <StandupView />}
+        <Routes>
+          <Route path="/planning" element={<PlanningView />} />
+          <Route path="/standup" element={<StandupView />} />
+          <Route path="*" element={<Navigate to="/planning" replace />} />
+        </Routes>
       </main>
     </div>
   );

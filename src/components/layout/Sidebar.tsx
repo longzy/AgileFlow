@@ -1,10 +1,11 @@
 import { Calendar, LayoutDashboard, Layers, Settings } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
 import { format, differenceInDays } from 'date-fns';
 
 export function Sidebar() {
-  const { sprint, activeView, setActiveView, currentUser } = useStore();
+  const { sprint, currentUser } = useStore();
   
   const daysLeft = sprint ? differenceInDays(new Date(sprint.endDate), new Date()) : 0;
 
@@ -20,30 +21,30 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 py-2">
-        <button
-          onClick={() => setActiveView('planning')}
-          className={cn(
+        <NavLink
+          to="/planning"
+          className={({ isActive }) => cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
-            activeView === 'planning' 
+            isActive 
               ? "bg-gray-900 text-white shadow-lg shadow-gray-900/10" 
               : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
           )}
         >
           <Layers className="w-5 h-5" />
           <span>Planning</span>
-        </button>
-        <button
-          onClick={() => setActiveView('standup')}
-          className={cn(
+        </NavLink>
+        <NavLink
+          to="/standup"
+          className={({ isActive }) => cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
-            activeView === 'standup' 
+            isActive 
               ? "bg-gray-900 text-white shadow-lg shadow-gray-900/10" 
               : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
           )}
         >
           <LayoutDashboard className="w-5 h-5" />
           <span>Standup</span>
-        </button>
+        </NavLink>
       </nav>
 
       <div className="mt-auto pt-6">
