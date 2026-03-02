@@ -133,6 +133,53 @@ export const getBoardData = async (boardId: string) => {
       issuesData = await issuesRes.json();
     }
 
+    // Extract unique users
+    const rawUsersMap = new Map();
+    (issuesData.issues || []).forEach((i: any) => {
+      const user = i.fields.assignee;
+      if (user && !rawUsersMap.has(user.key)) {
+        rawUsersMap.set(user.key, {
+          id: user.key,
+          name: user.name,
+          avatarUrl: user.avatarUrls?.['48x48']
+        });
+      }
+    });
+
+    // Fetch avatars and build resolved users
+    const fetchAvatarAsBase64 = async (url: string) => {
+      try {
+        const res = await fetch(url, {
+          headers: getJiraHeaders(),
+          signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) return null;
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const contentType = res.headers.get('content-type') || 'image/png';
+        return `data:${contentType};base64,${buffer.toString('base64')}`;
+      } catch (e) {
+        console.error("Failed to fetch avatar:", e);
+        return null;
+      }
+    };
+
+    const resolvedUsersMap = new Map();
+    await Promise.all(Array.from(rawUsersMap.values()).map(async (user) => {
+      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
+      if (user.avatarUrl) {
+        const base64 = await fetchAvatarAsBase64(user.avatarUrl);
+        if (base64) {
+          avatar = base64;
+        }
+      }
+      resolvedUsersMap.set(user.id, {
+        id: user.id,
+        name: user.name,
+        avatar
+      });
+    }));
+
     // Map Jira issues to our format
     const mapJiraIssue = (issue: any, status: string) => {
       const assignee = issue.fields.assignee;
@@ -144,28 +191,11 @@ export const getBoardData = async (boardId: string) => {
         status: status,
         estimated: !!issue.fields.customfield_10106,
         storyPoints: issue.fields.customfield_10106,
-        assignee: assignee ? {
-          id: assignee.key,
-          name: assignee.name,
-          avatar: assignee.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(assignee.displayName)}`
-        } : undefined,
+        assignee: assignee ? resolvedUsersMap.get(assignee.key) : undefined,
       };
     };
 
-    // Extract unique users
-    const usersMap = new Map();
-    const processUser = (user: any) => {
-      if (user && !usersMap.has(user.key)) {
-        usersMap.set(user.key, {
-          id: user.key,
-          name: user.name,
-          avatar: user.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.displayName)}`
-        });
-      }
-    };
-
     const allIssues = (issuesData.issues || []).map((i: any) => {
-      processUser(i.fields.assignee);
       const statusCategory = i.fields.status?.statusCategory?.key;
       let mappedStatus = 'todo';
       
@@ -195,7 +225,7 @@ export const getBoardData = async (boardId: string) => {
         isActive: true,
       } : null,
       issues: allIssues,
-      users: Array.from(usersMap.values())
+      users: Array.from(resolvedUsersMap.values())
     };
 
   } catch (error) {

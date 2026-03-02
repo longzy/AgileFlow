@@ -15,11 +15,11 @@ export const getMockData = (boardId: string) => {
       isActive: true,
     },
     issues: [
-      { id: 'i1', key: 'PROJ-101', summary: 'Implement Login Page', status: 'todo', estimated: false, assigneeId: 'u1', assignee: users[0], progress: 0 },
-      { id: 'i2', key: 'PROJ-102', summary: 'Database Schema Design', status: 'todo', estimated: false, assigneeId: 'u2', assignee: users[1], progress: 0 },
-      { id: 'i3', key: 'PROJ-103', summary: 'User API Endpoint', status: 'in-progress', estimated: true, storyPoints: 5, assigneeId: 'u3', assignee: users[2], progress: 50 },
-      { id: 'i4', key: 'PROJ-104', summary: 'Landing Page Design', status: 'in-progress', estimated: true, storyPoints: 3, assigneeId: 'u4', assignee: users[3], progress: 50 },
-      { id: 'i5', key: 'PROJ-105', summary: 'Unit Tests for Auth', status: 'done', estimated: true, storyPoints: 2, assigneeId: 'u1', assignee: users[0], progress: 100 },
+      { id: 'i1', key: 'PROJ-101', summary: 'Implement Login Page', status: 'todo', estimated: false, assignee: users[0], progress: 0 },
+      { id: 'i2', key: 'PROJ-102', summary: 'Database Schema Design', status: 'todo', estimated: false, assignee: users[1], progress: 0 },
+      { id: 'i3', key: 'PROJ-103', summary: 'User API Endpoint', status: 'in-progress', estimated: true, storyPoints: 5, assignee: users[2], progress: 50 },
+      { id: 'i4', key: 'PROJ-104', summary: 'Landing Page Design', status: 'in-progress', estimated: true, storyPoints: 3, assignee: users[3], progress: 50 },
+      { id: 'i5', key: 'PROJ-105', summary: 'Unit Tests for Auth', status: 'done', estimated: true, storyPoints: 2, assignee: users[0], progress: 100 },
     ],
     users
   };
