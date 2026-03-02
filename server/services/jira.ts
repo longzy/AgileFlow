@@ -12,6 +12,63 @@ const getJiraHeaders = () => {
   };
 };
 
+export const updateIssueStatus = async (issueId: string, targetStatusCategory: string) => {
+  if (!config.JIRA.BASE_URL) {
+    console.log(`[Mock] Updating issue ${issueId} status category to ${targetStatusCategory}`);
+    return { success: true };
+  }
+
+  try {
+    // 1. Fetch available transitions for the issue
+    const transitionsRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/transitions`, {
+      headers: getJiraHeaders(),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!transitionsRes.ok) {
+      throw new Error(`Failed to fetch transitions: ${transitionsRes.statusText}`);
+    }
+
+    const transitionsData = await transitionsRes.json();
+    
+    // 2. Find a transition that moves the issue to the target status category
+    // targetStatusCategory is usually 'new', 'indeterminate' (in progress), or 'done'
+    const transition = transitionsData.transitions.find((t: any) => 
+      t.to?.statusCategory?.key === targetStatusCategory
+    );
+
+    if (!transition) {
+      // It's possible the issue is already in the target status, or there's no valid transition.
+      // We'll just log a warning and return success to not block the UI.
+      console.warn(`No transition found for status category: ${targetStatusCategory}. It might already be in this state.`);
+      return { success: true, warning: 'No valid transition found' };
+    }
+
+    // 3. Perform the transition
+    const transitionBody = {
+      transition: {
+        id: transition.id
+      }
+    };
+
+    const updateRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/transitions`, {
+      method: 'POST',
+      headers: getJiraHeaders(),
+      body: JSON.stringify(transitionBody),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!updateRes.ok) {
+      throw new Error(`Failed to update status: ${updateRes.statusText}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Jira Update Status Error:", error);
+    throw error;
+  }
+};
+
 export const updateIssueProgress = async (issueId: string, progress: number) => {
   if (!config.JIRA.BASE_URL) {
     console.log(`[Mock] Updating issue ${issueId} progress to ${progress}%`);

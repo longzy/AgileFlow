@@ -178,6 +178,10 @@ export const useStore = create<AppState>()(
       },
 
       updateIssueStatus: (id, status) => set((state) => {
+        const issue = state.issues.find(i => i.id === id);
+        if (!issue) return state;
+        
+        const oldStatus = issue.status;
         const updatedIssues = state.issues.map(i => i.id === id ? { 
           ...i, 
           status,
@@ -188,6 +192,19 @@ export const useStore = create<AppState>()(
         const updatedIssue = updatedIssues.find(i => i.id === id);
         if (updatedIssue && state.selectedBoard) {
           socketService.updateIssue(state.selectedBoard.id, updatedIssue);
+        }
+
+        // Call API in background if status changed
+        if (oldStatus !== status) {
+          let statusCategory = 'new';
+          if (status === 'in-progress') statusCategory = 'indeterminate';
+          if (status === 'done') statusCategory = 'done';
+          
+          fetch(`/api/jira/issue/${id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ statusCategory })
+          }).catch(err => console.error('Failed to update status', err));
         }
 
         return { issues: updatedIssues };
@@ -276,6 +293,18 @@ export const useStore = create<AppState>()(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ progress })
         }).catch(err => console.error('Failed to update progress', err));
+
+        if (issue.status !== newStatus) {
+          let statusCategory = 'new';
+          if (newStatus === 'in-progress') statusCategory = 'indeterminate';
+          if (newStatus === 'done') statusCategory = 'done';
+          
+          fetch(`/api/jira/issue/${id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ statusCategory })
+          }).catch(err => console.error('Failed to update status', err));
+        }
 
         return { issues: newIssues };
       }),
