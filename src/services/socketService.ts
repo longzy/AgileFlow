@@ -24,6 +24,14 @@ class SocketService {
     this.socket.on("issue_updated", (issue) => {
       this.emit("issue_updated", issue);
     });
+
+    this.socket.on("board_users", (users) => {
+      this.emit("board_users", users);
+    });
+
+    this.socket.on("current_issue_updated", (issueId) => {
+      this.emit("current_issue_updated", issueId);
+    });
   }
 
   disconnect() {
