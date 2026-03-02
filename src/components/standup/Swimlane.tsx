@@ -3,7 +3,6 @@ import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
-import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
 import { GripVertical } from 'lucide-react';
 
@@ -130,8 +129,7 @@ const SwimlaneSlot: React.FC<{
 }
 
 export function ProgressMarker({ issue, step, isOverlay }: { issue: Issue, step: number, isOverlay?: boolean }) {
-  const { users } = useStore();
-  const assignee = users.find(u => u.id === issue.assigneeId);
+  const assignee = issue.assignee;
   
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `marker-${issue.id}`,

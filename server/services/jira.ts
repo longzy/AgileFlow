@@ -144,10 +144,9 @@ export const getBoardData = async (boardId: string) => {
         status: status,
         estimated: !!issue.fields.customfield_10106,
         storyPoints: issue.fields.customfield_10106,
-        assigneeId: assignee?.accountId,
         assignee: assignee ? {
-          id: assignee.accountId,
-          name: assignee.displayName,
+          id: assignee.key,
+          name: assignee.name,
           avatar: assignee.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(assignee.displayName)}`
         } : undefined,
       };
@@ -156,10 +155,10 @@ export const getBoardData = async (boardId: string) => {
     // Extract unique users
     const usersMap = new Map();
     const processUser = (user: any) => {
-      if (user && !usersMap.has(user.accountId)) {
-        usersMap.set(user.accountId, {
-          id: user.accountId,
-          name: user.displayName,
+      if (user && !usersMap.has(user.key)) {
+        usersMap.set(user.key, {
+          id: user.key,
+          name: user.name,
           avatar: user.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.displayName)}`
         });
       }

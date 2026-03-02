@@ -9,8 +9,8 @@ export function Sidebar() {
   const daysLeft = sprint ? differenceInDays(new Date(sprint.endDate), new Date()) : 0;
 
   return (
-    <aside className="w-64 flex-shrink-0 h-screen bg-[#F9F9F9] flex flex-col p-6 text-gray-600">
-      <div className="flex items-center gap-3 mb-6 px-2">
+    <aside className="w-64 flex-shrink-0 h-screen bg-[#F9F9F9] flex flex-col p-4 text-gray-600">
+      <div className="flex items-center gap-3 mb-2 px-2">
         <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center">
           <Layers className="w-4 h-4" />
         </div>
@@ -19,11 +19,7 @@ export function Sidebar() {
         </h1>
       </div>
 
-      <div className="mb-6 px-2">
-        {/* User profile moved to bottom */}
-      </div>
-
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 py-2">
         <button
           onClick={() => setActiveView('planning')}
           className={cn(

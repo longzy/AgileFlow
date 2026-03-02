@@ -11,7 +11,6 @@ export type Issue = {
   key: string;
   summary: string;
   description?: string;
-  assigneeId?: string;
   assignee?: User;
   status: IssueStatus;
   storyPoints?: number;
