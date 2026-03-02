@@ -192,6 +192,18 @@ export const useStore = create<AppState>()(
           body: JSON.stringify({ points })
         }).catch(err => console.error('Failed to update points', err));
 
+        // Find next unestimated issue
+        const nextIssue = updatedIssues.find(i => !i.estimated && i.id !== id);
+        if (nextIssue) {
+          // Defer the switch slightly to allow UI to update
+          setTimeout(() => {
+            get().setCurrentIssue(nextIssue.id);
+          }, 500);
+        } else {
+          // No more issues, clear current issue
+          get().setCurrentIssue(null);
+        }
+
         return { issues: updatedIssues };
       }),
 
