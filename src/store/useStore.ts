@@ -192,19 +192,36 @@ export const useStore = create<AppState>()(
           body: JSON.stringify({ points })
         }).catch(err => console.error('Failed to update points', err));
 
+        // Reset voting state immediately to prevent UI flicker
+        // We don't broadcast reset here because we are about to switch rooms
+        // But we want the local UI to clear the "Consensus" state
+        
         // Find next unestimated issue
-        const nextIssue = updatedIssues.find(i => !i.estimated && i.id !== id);
+        // 1. Search after current index
+        const currentIndex = updatedIssues.findIndex(i => i.id === id);
+        let nextIssue = updatedIssues.slice(currentIndex + 1).find(i => !i.estimated);
+        
+        // 2. If not found, search from beginning
+        if (!nextIssue) {
+          nextIssue = updatedIssues.slice(0, currentIndex).find(i => !i.estimated);
+        }
+
         if (nextIssue) {
           // Defer the switch slightly to allow UI to update
           setTimeout(() => {
             get().setCurrentIssue(nextIssue.id);
-          }, 500);
+          }, 100);
         } else {
           // No more issues, clear current issue
           get().setCurrentIssue(null);
         }
 
-        return { issues: updatedIssues };
+        return { 
+          issues: updatedIssues,
+          votes: [],
+          revealed: false,
+          consensus: null
+        };
       }),
 
       updateIssueProgress: (id, progress) => set((state) => {
