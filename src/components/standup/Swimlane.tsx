@@ -41,12 +41,12 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
       ref={isOverlay ? undefined : setNodeRef}
       style={style}
       className={cn(
-        "bg-[#F9F9F9] rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors",
+        "bg-[#F9F9F9] rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors relative overflow-hidden",
         isDragging && !isOverlay ? "opacity-50" : "",
         isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
       )}
     >
-      <div className="flex justify-between items-center px-2">
+      <div className="flex justify-between items-center px-2 pl-3">
         <div className="flex items-center gap-3">
           <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
@@ -54,12 +54,20 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           <span className="text-sm font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
+          {issue.priority && (
+            <span className={cn(
+              "w-2 h-2 rounded-full flex-shrink-0",
+              issue.priority === 'High' ? "bg-red-500" :
+              issue.priority === 'Medium' ? "bg-amber-500" :
+              "bg-blue-500"
+            )} title={`Priority: ${issue.priority}`} />
+          )}
           <span className="text-gray-600 font-medium">{issue.summary}</span>
         </div>
         <span className="text-lg font-bold text-gray-900 w-16 text-right tabular-nums flex-shrink-0">{displayProgress}%</span>
       </div>
       
-      <div className="flex gap-1 relative mt-5 mb-1 h-8">
+      <div className="flex gap-1 relative mt-5 mb-1 h-8 ml-3">
         {/* Background track line */}
         <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0" />
         <div 

@@ -37,12 +37,12 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "bg-white rounded-2xl p-4 transition-all group relative border border-transparent shadow-sm",
+        "bg-white rounded-2xl p-4 transition-all group relative border border-transparent shadow-sm overflow-hidden",
         isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
         isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
       )}
     >
-      <div className="flex items-start justify-between mb-2">
+      <div className="flex items-start justify-between mb-2 pl-1">
         <span className="text-xs font-bold text-gray-900 tracking-tight">
           {issue.key}
         </span>
@@ -68,20 +68,27 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
         </div>
       </div>
       
-      <h3 className="text-sm font-medium text-gray-900 mb-3 line-clamp-2 leading-relaxed group-hover:text-gray-700 transition-colors">
+      <h3 className="text-sm font-medium text-gray-900 mb-3 pl-1 line-clamp-2 leading-relaxed group-hover:text-gray-700 transition-colors">
         {issue.summary}
       </h3>
 
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
-        <div className="flex items-center gap-2">
-          <span className={cn(
-            "w-2 h-2 rounded-full",
-            issue.priority === 'High' ? "bg-red-500" :
-            issue.priority === 'Medium' ? "bg-amber-500" :
-            "bg-blue-500"
-          )} />
-          <span className="text-xs text-gray-500 font-medium">{issue.priority}</span>
-        </div>
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50 pl-1">
+        {issue.priority ? (
+          <div className={cn(
+            "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+            issue.priority === 'High' ? "bg-red-50 text-red-600" :
+            issue.priority === 'Medium' ? "bg-amber-50 text-amber-600" :
+            "bg-blue-50 text-blue-600"
+          )}>
+            <span className={cn(
+              "w-1.5 h-1.5 rounded-full",
+              issue.priority === 'High' ? "bg-red-500" :
+              issue.priority === 'Medium' ? "bg-amber-500" :
+              "bg-blue-500"
+            )} />
+            {issue.priority}
+          </div>
+        ) : <div />}
         
         {issue.status === 'in-progress' && (
           <div className="text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">

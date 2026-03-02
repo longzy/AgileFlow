@@ -183,6 +183,16 @@ export const getBoardData = async (boardId: string) => {
     // Map Jira issues to our format
     const mapJiraIssue = (issue: any, status: string) => {
       const assignee = issue.fields.assignee;
+      let priority = 'Medium';
+      if (issue.fields.priority?.name) {
+        const pName = issue.fields.priority.name.toLowerCase();
+        if (pName.includes('high') || pName.includes('highest') || pName.includes('critical') || pName.includes('major')) {
+          priority = 'High';
+        } else if (pName.includes('low') || pName.includes('lowest') || pName.includes('minor') || pName.includes('trivial')) {
+          priority = 'Low';
+        }
+      }
+
       return {
         id: issue.id,
         key: issue.key,
@@ -191,6 +201,7 @@ export const getBoardData = async (boardId: string) => {
         status: status,
         estimated: !!issue.fields.customfield_10106,
         storyPoints: issue.fields.customfield_10106,
+        priority,
         assignee: assignee ? resolvedUsersMap.get(assignee.key) : undefined,
       };
     };
