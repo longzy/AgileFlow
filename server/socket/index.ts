@@ -15,6 +15,7 @@ interface ConnectedClient {
 export function setupSocket(io: Server) {
   const rooms = new Map(); // roomId (issueId) -> { votes: [], revealed: false, consensus: null }
   const clients = new Map<string, ConnectedClient>(); // socketId -> Client Data
+  const boards = new Map<string, { hostId: string }>(); // boardId -> Board State
 
   // Helper to broadcast users in a board
   const broadcastBoardUsers = (boardId: string) => {
@@ -27,6 +28,18 @@ export function setupSocket(io: Server) {
     const uniqueUsers = Array.from(uniqueUsersMap.values());
 
     io.to(`board:${boardId}`).emit("board_users", uniqueUsers);
+
+    // Evaluate and broadcast host
+    if (uniqueUsers.length === 0) {
+      boards.delete(boardId);
+    } else {
+      let board = boards.get(boardId);
+      if (!board || !uniqueUsers.some(u => u.id === board!.hostId)) {
+        board = { hostId: uniqueUsers[0].id };
+        boards.set(boardId, board);
+      }
+      io.to(`board:${boardId}`).emit("board_host", board.hostId);
+    }
   };
 
   io.on("connection", (socket: Socket) => {
@@ -43,10 +56,13 @@ export function setupSocket(io: Server) {
     });
 
     socket.on("join_board", ({ boardId, user }: { boardId: string, user: User }) => {
+      const bId = String(boardId);
+      console.log(`[Socket] join_board received: boardId=${bId}, user=${user.name} (${user.id})`);
+
       const client = clients.get(socket.id);
       if (client) {
         // If switching boards, leave previous one
-        if (client.boardId && client.boardId !== boardId) {
+        if (client.boardId && client.boardId !== bId) {
           socket.leave(`board:${client.boardId}`);
           // We will broadcast leave update later
           const prevBoardId = client.boardId;
@@ -54,16 +70,16 @@ export function setupSocket(io: Server) {
           setTimeout(() => broadcastBoardUsers(prevBoardId), 100);
         }
         
-        client.boardId = boardId;
+        client.boardId = bId;
         client.user = user;
       }
 
-      const roomName = `board:${boardId}`;
+      const roomName = `board:${bId}`;
       socket.join(roomName);
-      console.log(`User ${user.name} (${socket.id}) joined board ${boardId}`);
+      console.log(`User ${user.name} (${socket.id}) joined board ${bId}`);
       
       // Broadcast updated user list to this board
-      broadcastBoardUsers(boardId);
+      broadcastBoardUsers(bId);
     });
 
     socket.on("leave_board", (boardId) => {
@@ -77,6 +93,14 @@ export function setupSocket(io: Server) {
       
       console.log(`User ${socket.id} left board ${boardId}`);
       broadcastBoardUsers(boardId);
+    });
+
+    socket.on("claim_host", ({ boardId, userId }) => {
+      const board = boards.get(boardId);
+      if (board) {
+        board.hostId = userId;
+        io.to(`board:${boardId}`).emit("board_host", userId);
+      }
     });
 
     socket.on("update_issue", ({ boardId, issue }) => {

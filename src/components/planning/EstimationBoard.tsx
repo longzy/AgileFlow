@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { Issue, Vote } from '../../types';
-import { Check, RotateCcw, Play } from 'lucide-react';
+import { Check, RotateCcw, Play, Crown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21];
 
 export function EstimationBoard({ issue }: { issue: Issue }) {
-  const { users, currentUser, updateIssuePoints, votes, revealed, consensus, joinRoom, submitVote, revealVotes, resetVotes } = useStore();
+  const { users, currentUser, updateIssuePoints, votes, revealed, consensus, joinRoom, submitVote, revealVotes, resetVotes, hostId } = useStore();
+
+  const isHost = currentUser?.id === hostId;
 
   // Ensure current user is in the list for display
   const displayUsers = [...users];
@@ -26,15 +28,15 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
   };
 
   const handleReveal = () => {
-    revealVotes(issue.id);
+    if (isHost) revealVotes(issue.id);
   };
 
   const handleReset = () => {
-    resetVotes(issue.id);
+    if (isHost) resetVotes(issue.id);
   };
 
   const handleConfirm = () => {
-    if (consensus !== null) {
+    if (isHost && consensus !== null) {
       updateIssuePoints(issue.id, consensus);
     }
   };
@@ -64,40 +66,58 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
           {/* Table Center */}
           <div className="text-center">
             {!revealed ? (
-              <button
-                disabled={!allVoted}
-                onClick={handleReveal}
-                className={cn(
-                  "px-8 py-4 rounded-full font-semibold transition-all duration-300 flex items-center gap-2",
-                  allVoted 
-                    ? "bg-gray-900 hover:bg-gray-800 text-white shadow-lg shadow-gray-900/20" 
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                )}
-              >
-                <Play className="w-5 h-5" />
-                Reveal Cards
-              </button>
+              isHost ? (
+                <button
+                  disabled={!allVoted}
+                  onClick={handleReveal}
+                  className={cn(
+                    "px-8 py-4 rounded-full font-semibold transition-all duration-300 flex items-center gap-2",
+                    allVoted 
+                      ? "bg-gray-900 hover:bg-gray-800 text-white shadow-lg shadow-gray-900/20" 
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  )}
+                >
+                  <Play className="w-5 h-5" />
+                  Reveal Cards
+                </button>
+              ) : (
+                <div className="text-gray-500 font-medium px-6 py-3 bg-white rounded-full shadow-sm border border-gray-100">
+                  {allVoted ? "Waiting for Scrum Master to reveal..." : "Waiting for votes..."}
+                </div>
+              )
             ) : consensus !== null ? (
               <div className="flex flex-col items-center">
                 <div className="text-emerald-600 font-bold text-xl mb-4">Consensus!</div>
-                <button
-                  onClick={handleConfirm}
-                  className="px-8 py-4 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/30 flex items-center gap-2"
-                >
-                  <Check className="w-5 h-5" />
-                  Save {consensus} Points
-                </button>
+                {isHost ? (
+                  <button
+                    onClick={handleConfirm}
+                    className="px-8 py-4 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold transition-all duration-300 shadow-lg shadow-emerald-500/30 flex items-center gap-2"
+                  >
+                    <Check className="w-5 h-5" />
+                    Save {consensus} Points
+                  </button>
+                ) : (
+                  <div className="text-gray-500 font-medium mt-2 px-6 py-3 bg-white rounded-full shadow-sm border border-gray-100">
+                    Waiting for Scrum Master to save...
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center">
                 <div className="text-amber-500 font-bold text-xl mb-4">No Consensus</div>
-                <button
-                  onClick={handleReset}
-                  className="px-8 py-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold transition-all duration-300 flex items-center gap-2"
-                >
-                  <RotateCcw className="w-5 h-5" />
-                  Re-vote
-                </button>
+                {isHost ? (
+                  <button
+                    onClick={handleReset}
+                    className="px-8 py-4 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold transition-all duration-300 flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                    Re-vote
+                  </button>
+                ) : (
+                  <div className="text-gray-500 font-medium mt-2 px-6 py-3 bg-white rounded-full shadow-sm border border-gray-100">
+                    Waiting for Scrum Master to restart...
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -105,31 +125,17 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
           {/* Users around the table */}
           {(() => {
             // Reorder users so current user is at the bottom (index 0 in our calculation logic below)
-            // We want the current user to be at angle Math.PI / 2 (90 degrees, bottom)
-            // Our formula is: angle = (index / count) * 2PI - PI/2
-            // So if index = count/2, angle = PI - PI/2 = PI/2 (Bottom)
-            
             let orderedUsers = [...displayUsers];
             if (currentUser) {
               const currentUserIndex = orderedUsers.findIndex(u => u.id === currentUser.id);
               if (currentUserIndex !== -1) {
                 // Remove current user
                 const [me] = orderedUsers.splice(currentUserIndex, 1);
-                // Calculate how many users should be on the left and right to center "me" at the bottom
-                // We want "me" to be at the position that corresponds to 90 degrees (bottom)
-                // In a standard circle starting from -90deg (top), 90deg is at 50% of the circle.
-                
-                // Let's simplify: Place "me" at the beginning, but we'll adjust the starting angle offset
-                // so that the first element (me) ends up at the bottom.
                 orderedUsers = [me, ...orderedUsers];
               }
             }
 
             return orderedUsers.map((user, index) => {
-              // We want index 0 (current user) to be at Math.PI / 2 (Bottom)
-              // The standard distribution is: angle = (index / total) * 2PI + startOffset
-              // If index=0, angle = startOffset. We want startOffset = Math.PI / 2.
-              
               const angle = (index / orderedUsers.length) * Math.PI * 2 + Math.PI / 2;
               
               const radiusX = 360; 
@@ -140,6 +146,7 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
               const userVote = votes.find(v => v.userId === user.id);
               const hasVoted = !!userVote;
               const isCurrentUser = user.id === currentUser?.id;
+              const isHostUser = user.id === hostId;
 
               return (
                 <div 
@@ -162,9 +169,14 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
                     )}
                   </div>
                   <div className={cn(
-                    "flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border shadow-sm",
+                    "flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border shadow-sm relative",
                     isCurrentUser ? "border-blue-200 bg-blue-50" : "border-gray-100"
                   )}>
+                    {isHostUser && (
+                      <div className="absolute -top-3 -right-2 bg-amber-100 p-1 rounded-full border border-amber-200 shadow-sm z-10" title="Scrum Master">
+                        <Crown className="w-3 h-3 text-amber-500" />
+                      </div>
+                    )}
                     <img src={user.avatar} alt={user.name} className="w-6 h-6 min-w-[24px] min-h-[24px] object-cover rounded-full" />
                     <span className={cn("text-sm font-medium", isCurrentUser ? "text-blue-700" : "text-gray-700")}>
                       {isCurrentUser ? 'You' : user.name}

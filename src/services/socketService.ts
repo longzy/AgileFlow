@@ -11,6 +11,7 @@ class SocketService {
     
     this.socket.on("connect", () => {
       console.log("Connected to WebSocket");
+      this.emit("connect", null);
     });
 
     this.socket.on("room_state", (state) => {
@@ -31,6 +32,10 @@ class SocketService {
 
     this.socket.on("current_issue_updated", (issueId) => {
       this.emit("current_issue_updated", issueId);
+    });
+
+    this.socket.on("board_host", (hostId) => {
+      this.emit("board_host", hostId);
     });
   }
 
@@ -59,6 +64,10 @@ class SocketService {
 
   updateCurrentIssue(boardId: string, issueId: string) {
     this.socket?.emit("update_current_issue", { boardId, issueId });
+  }
+
+  claimHost(boardId: string, userId: string) {
+    this.socket?.emit("claim_host", { boardId, userId });
   }
 
   vote(roomId: string, userId: string, points: number) {

@@ -22,6 +22,7 @@ interface AppState {
   revealed: boolean;
   consensus: number | null;
   currentIssueId: string | null;
+  hostId: string | null;
 
   setActiveView: (view: 'planning' | 'standup') => void;
   setCurrentIssue: (issueId: string | null) => void;
@@ -39,6 +40,7 @@ interface AppState {
   
   // Socket actions
   joinRoom: (roomId: string) => void;
+  claimHost: (boardId: string) => void;
   submitVote: (roomId: string, points: number) => void;
   revealVotes: (roomId: string) => void;
   resetVotes: (roomId: string) => void;
@@ -62,6 +64,7 @@ export const useStore = create<AppState>()(
       revealed: false,
       consensus: null,
       currentIssueId: null,
+      hostId: null,
 
       setActiveView: (view) => set({ activeView: view }),
 
@@ -82,6 +85,16 @@ export const useStore = create<AppState>()(
         socketService.userJoined(currentUser);
         
         // Listen for updates
+        socketService.on("connect", () => {
+          const { selectedBoard, currentUser, currentIssueId } = get();
+          if (selectedBoard && currentUser) {
+            socketService.joinBoard(selectedBoard.id, currentUser);
+          }
+          if (currentIssueId) {
+            socketService.joinRoom(currentIssueId);
+          }
+        });
+
         socketService.on("room_state", (state: any) => {
           set({ 
             votes: state.votes, 
@@ -106,6 +119,10 @@ export const useStore = create<AppState>()(
 
         socketService.on("current_issue_updated", (issueId: string) => {
           set({ currentIssueId: issueId });
+        });
+
+        socketService.on("board_host", (hostId: string) => {
+          set({ hostId });
         });
       },
 
@@ -304,6 +321,13 @@ export const useStore = create<AppState>()(
         socketService.joinRoom(roomId);
       },
       
+      claimHost: (boardId) => {
+        const { currentUser } = get();
+        if (currentUser) {
+          socketService.claimHost(boardId, currentUser.id);
+        }
+      },
+
       submitVote: (roomId, points) => {
         const { currentUser } = get();
         if (currentUser) {
