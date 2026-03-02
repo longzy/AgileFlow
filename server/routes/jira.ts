@@ -1,8 +1,21 @@
 import express from "express";
-import { updateIssueProgress, getBoards, getBoardData } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
+
+// Update Issue Points
+router.post("/issue/:issueId/points", async (req, res) => {
+  const { issueId } = req.params;
+  const { points } = req.body;
+
+  try {
+    await updateIssuePoints(issueId, points);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update Jira issue points" });
+  }
+});
 
 // Update Issue Progress
 router.post("/issue/:issueId/progress", async (req, res) => {

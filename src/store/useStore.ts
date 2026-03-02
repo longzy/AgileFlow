@@ -185,6 +185,13 @@ export const useStore = create<AppState>()(
           socketService.updateIssue(state.selectedBoard.id, updatedIssue);
         }
 
+        // Call API in background
+        fetch(`/api/jira/issue/${id}/points`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ points })
+        }).catch(err => console.error('Failed to update points', err));
+
         return { issues: updatedIssues };
       }),
 

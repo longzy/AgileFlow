@@ -43,6 +43,40 @@ export const updateIssueProgress = async (issueId: string, progress: number) => 
   }
 };
 
+export const updateIssuePoints = async (issueId: string, points: number) => {
+  if (!config.JIRA.BASE_URL) {
+    console.log(`[Mock] Updating issue ${issueId} points to ${points}`);
+    return { success: true };
+  }
+
+  try {
+    const updateBody = {
+      fields: {
+        customfield_10106: points
+      }
+    };
+
+    const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${config.JIRA.EMAIL}:${config.JIRA.API_TOKEN}`).toString('base64')}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updateBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update points: ${response.statusText}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Jira Update Points Error:", error);
+    throw error;
+  }
+};
+
 export const getBoards = async () => {
   if (!config.JIRA.BASE_URL) {
     return getMockBoards();
@@ -90,7 +124,7 @@ export const getBoardData = async (boardId: string) => {
     const activeSprint = sprintData.values?.[0];
 
     // Fetch sprint issues
-    let issuesData = { values: [] };
+    let issuesData = { issues: [] };
     if (activeSprint) {
       const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${activeSprint.id}/issue`, {
         headers: getJiraHeaders(),
@@ -106,8 +140,8 @@ export const getBoardData = async (boardId: string) => {
       summary: issue.fields.summary,
       description: issue.fields.description,
       status: status,
-      estimated: !!issue.fields.customfield_10016,
-      storyPoints: issue.fields.customfield_10016,
+      estimated: !!issue.fields.customfield_10106,
+      storyPoints: issue.fields.customfield_10106,
       assigneeId: issue.fields.assignee?.accountId,
     });
 
@@ -123,7 +157,7 @@ export const getBoardData = async (boardId: string) => {
       }
     };
 
-    const allIssues = (issuesData.values || []).map((i: any) => {
+    const allIssues = (issuesData.issues || []).map((i: any) => {
       processUser(i.fields.assignee);
       const statusCategory = i.fields.status?.statusCategory?.key;
       let mappedStatus = 'todo';
