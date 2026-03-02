@@ -71,7 +71,7 @@ export const useStore = create<AppState>()(
       setCurrentIssue: (issueId) => {
         set({ currentIssueId: issueId });
         const { selectedBoard } = get();
-        if (selectedBoard && issueId) {
+        if (selectedBoard) {
           socketService.updateCurrentIssue(selectedBoard.id, issueId);
         }
       },

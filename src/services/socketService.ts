@@ -62,7 +62,7 @@ class SocketService {
     this.socket?.emit("update_issue", { boardId, issue });
   }
 
-  updateCurrentIssue(boardId: string, issueId: string) {
+  updateCurrentIssue(boardId: string, issueId: string | null) {
     this.socket?.emit("update_current_issue", { boardId, issueId });
   }
 
