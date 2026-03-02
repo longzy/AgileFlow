@@ -185,6 +185,9 @@ export const useStore = create<AppState>()(
           socketService.updateIssue(state.selectedBoard.id, updatedIssue);
         }
 
+        // Reset server room state (clear votes and consensus)
+        socketService.reset(id);
+
         // Call API in background
         fetch(`/api/jira/issue/${id}/points`, {
           method: 'POST',
