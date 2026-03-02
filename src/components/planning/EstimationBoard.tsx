@@ -97,50 +97,77 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
           </div>
 
           {/* Users around the table */}
-          {users.map((user, index) => {
-            // Distribute users starting from top (-PI/2)
-            const angle = (index / users.length) * Math.PI * 2 - Math.PI / 2;
-            const radiusX = 360; 
-            const radiusY = 180;
-            const x = Math.cos(angle) * radiusX;
-            const y = Math.sin(angle) * radiusY;
+          {(() => {
+            // Reorder users so current user is at the bottom (index 0 in our calculation logic below)
+            // We want the current user to be at angle Math.PI / 2 (90 degrees, bottom)
+            // Our formula is: angle = (index / count) * 2PI - PI/2
+            // So if index = count/2, angle = PI - PI/2 = PI/2 (Bottom)
             
-            const userVote = votes.find(v => v.userId === user.id);
-            const hasVoted = !!userVote;
-            const isCurrentUser = user.id === currentUser?.id;
+            let orderedUsers = [...users];
+            if (currentUser) {
+              const currentUserIndex = orderedUsers.findIndex(u => u.id === currentUser.id);
+              if (currentUserIndex !== -1) {
+                // Remove current user
+                const [me] = orderedUsers.splice(currentUserIndex, 1);
+                // Calculate how many users should be on the left and right to center "me" at the bottom
+                // We want "me" to be at the position that corresponds to 90 degrees (bottom)
+                // In a standard circle starting from -90deg (top), 90deg is at 50% of the circle.
+                
+                // Let's simplify: Place "me" at the beginning, but we'll adjust the starting angle offset
+                // so that the first element (me) ends up at the bottom.
+                orderedUsers = [me, ...orderedUsers];
+              }
+            }
 
-            return (
-              <div 
-                key={user.id} 
-                className="absolute flex flex-col items-center gap-3 transition-all duration-500"
-                style={{ transform: `translate(${x}px, ${y}px)` }}
-              >
-                <div className={cn(
-                  "w-14 h-20 rounded-xl border-2 flex items-center justify-center bg-white shadow-lg transition-all duration-500",
-                  hasVoted && !revealed ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200",
-                  revealed && "bg-white border-slate-200",
-                  isCurrentUser && "ring-2 ring-blue-500 ring-offset-2"
-                )}>
-                  {revealed && userVote ? (
-                    <span className="text-2xl font-bold text-slate-900">{userVote.points}</span>
-                  ) : hasVoted ? (
-                    <Check className="w-5 h-5 text-white" />
-                  ) : (
-                    <span className="text-slate-300">?</span>
-                  )}
+            return orderedUsers.map((user, index) => {
+              // We want index 0 (current user) to be at Math.PI / 2 (Bottom)
+              // The standard distribution is: angle = (index / total) * 2PI + startOffset
+              // If index=0, angle = startOffset. We want startOffset = Math.PI / 2.
+              
+              const angle = (index / orderedUsers.length) * Math.PI * 2 + Math.PI / 2;
+              
+              const radiusX = 360; 
+              const radiusY = 180;
+              const x = Math.cos(angle) * radiusX;
+              const y = Math.sin(angle) * radiusY;
+              
+              const userVote = votes.find(v => v.userId === user.id);
+              const hasVoted = !!userVote;
+              const isCurrentUser = user.id === currentUser?.id;
+
+              return (
+                <div 
+                  key={user.id} 
+                  className="absolute flex flex-col items-center gap-3 transition-all duration-500"
+                  style={{ transform: `translate(${x}px, ${y}px)` }}
+                >
+                  <div className={cn(
+                    "w-14 h-20 rounded-xl border-2 flex items-center justify-center bg-white shadow-lg transition-all duration-500",
+                    hasVoted && !revealed ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200",
+                    revealed && "bg-white border-slate-200",
+                    isCurrentUser && "ring-2 ring-blue-500 ring-offset-2"
+                  )}>
+                    {revealed && userVote ? (
+                      <span className="text-2xl font-bold text-slate-900">{userVote.points}</span>
+                    ) : hasVoted ? (
+                      <Check className="w-5 h-5 text-white" />
+                    ) : (
+                      <span className="text-slate-300">?</span>
+                    )}
+                  </div>
+                  <div className={cn(
+                    "flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border shadow-sm",
+                    isCurrentUser ? "border-blue-200 bg-blue-50" : "border-slate-100"
+                  )}>
+                    <img src={user.avatar} alt={user.name} className="w-6 h-6 min-w-[24px] min-h-[24px] object-cover rounded-full" />
+                    <span className={cn("text-sm font-medium", isCurrentUser ? "text-blue-700" : "text-slate-700")}>
+                      {isCurrentUser ? 'You' : user.name}
+                    </span>
+                  </div>
                 </div>
-                <div className={cn(
-                  "flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border shadow-sm",
-                  isCurrentUser ? "border-blue-200 bg-blue-50" : "border-slate-100"
-                )}>
-                  <img src={user.avatar} alt={user.name} className="w-6 h-6 min-w-[24px] min-h-[24px] object-cover rounded-full" />
-                  <span className={cn("text-sm font-medium", isCurrentUser ? "text-blue-700" : "text-slate-700")}>
-                    {isCurrentUser ? 'You' : user.name}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </div>
 
