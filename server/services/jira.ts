@@ -266,7 +266,7 @@ export const getBoardData = async (boardId: string) => {
       let progress = 0;
       if (statusCategory === 'indeterminate') {
         mappedStatus = 'in-progress';
-        progress = 50;
+        // progress = 50;
       }
       if (statusCategory === 'done') {
         mappedStatus = 'done';
