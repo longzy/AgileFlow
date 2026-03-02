@@ -109,6 +109,10 @@ export const useStore = create<AppState>()(
       },
 
       logout: () => {
+        const { selectedBoard } = get();
+        if (selectedBoard) {
+          socketService.leaveBoard(selectedBoard.id);
+        }
         socketService.disconnect();
         set({ currentUser: null, selectedBoard: null });
         localStorage.removeItem('app-storage'); // Optional: clear storage

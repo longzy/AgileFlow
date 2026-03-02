@@ -78,5 +78,9 @@ export function setupSocket(io: Server) {
     socket.on("user_joined", (user) => {
       socket.broadcast.emit("user_joined_broadcast", user);
     });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
+    });
   });
 }
