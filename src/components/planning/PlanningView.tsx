@@ -27,7 +27,7 @@ export function PlanningView() {
         {selectedIssue ? (
           <EstimationBoard issue={selectedIssue} />
         ) : (
-          <div className="h-full flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+          <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
             Select a task to start estimation
           </div>
         )}

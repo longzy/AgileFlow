@@ -41,16 +41,16 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
       className={cn(
         "bg-white rounded-2xl p-4 transition-all group relative border border-transparent shadow-sm",
         isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
-        isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-slate-900/5" : "cursor-grab",
+        isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
       )}
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="text-xs font-bold text-slate-900 tracking-tight">
+        <span className="text-xs font-bold text-gray-900 tracking-tight">
           {issue.key}
         </span>
         <div className="flex items-center gap-2">
           {issue.estimated && (
-            <div className="flex items-center gap-1 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <div className="flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full text-[10px] font-bold">
               <CheckCircle2 className="w-3 h-3" />
               <span>{issue.storyPoints}</span>
             </div>
@@ -63,18 +63,18 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
               title={assignee.name}
             />
           ) : (
-            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
-              <span className="text-[10px] text-slate-400">?</span>
+            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <span className="text-[10px] text-gray-400">?</span>
             </div>
           )}
         </div>
       </div>
       
-      <h3 className="text-sm font-medium text-slate-900 mb-3 line-clamp-2 leading-relaxed group-hover:text-slate-700 transition-colors">
+      <h3 className="text-sm font-medium text-gray-900 mb-3 line-clamp-2 leading-relaxed group-hover:text-gray-700 transition-colors">
         {issue.summary}
       </h3>
 
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-50">
+      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
         <div className="flex items-center gap-2">
           <span className={cn(
             "w-2 h-2 rounded-full",
@@ -82,11 +82,11 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
             issue.priority === 'Medium' ? "bg-amber-500" :
             "bg-blue-500"
           )} />
-          <span className="text-xs text-slate-500 font-medium">{issue.priority}</span>
+          <span className="text-xs text-gray-500 font-medium">{issue.priority}</span>
         </div>
         
         {issue.status === 'in-progress' && (
-          <div className="text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-full">
+          <div className="text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded-full">
             {issue.progress}%
           </div>
         )}

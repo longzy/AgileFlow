@@ -18,8 +18,8 @@ export function KanbanColumn({ column, issues }: KanbanColumnProps) {
   return (
     <div className="flex flex-col w-80 shrink-0">
       <div className="flex items-center justify-between mb-4 px-1">
-        <h3 className="font-semibold text-slate-200">{column.title}</h3>
-        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-medium text-slate-400">
+        <h3 className="font-semibold text-gray-200">{column.title}</h3>
+        <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs font-medium text-gray-400">
           {issues.length}
         </span>
       </div>

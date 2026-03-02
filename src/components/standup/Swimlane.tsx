@@ -44,27 +44,27 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
       className={cn(
         "bg-[#F9F9F9] rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors",
         isDragging && !isOverlay ? "opacity-50" : "",
-        isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-slate-100"
+        isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
       )}
     >
       <div className="flex justify-between items-center px-2">
         <div className="flex items-center gap-3">
-          <div {...attributes} {...listeners} className={cn("text-slate-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-slate-500")}>
+          <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
           </div>
-          <span className="text-sm font-bold text-slate-900 tracking-tight">
+          <span className="text-sm font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
-          <span className="text-slate-600 font-medium">{issue.summary}</span>
+          <span className="text-gray-600 font-medium">{issue.summary}</span>
         </div>
-        <span className="text-lg font-bold text-slate-900 w-16 text-right tabular-nums flex-shrink-0">{displayProgress}%</span>
+        <span className="text-lg font-bold text-gray-900 w-16 text-right tabular-nums flex-shrink-0">{displayProgress}%</span>
       </div>
       
       <div className="flex gap-1 relative mt-5 mb-1 h-8">
         {/* Background track line */}
-        <div className="absolute top-1/2 left-0 right-0 h-2 bg-slate-200 -translate-y-1/2 rounded-full z-0" />
+        <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0" />
         <div 
-          className="absolute top-1/2 left-0 h-2 bg-slate-900 -translate-y-1/2 rounded-full z-0 transition-all duration-500" 
+          className="absolute top-1/2 left-0 h-2 bg-gray-900 -translate-y-1/2 rounded-full z-0 transition-all duration-500" 
           style={{ width: `${displayProgress}%` }}
         />
 
@@ -114,12 +114,12 @@ const SwimlaneSlot: React.FC<{
       {/* Hover indicator for slot */}
       <div className={cn(
         "absolute top-1/2 -translate-y-1/2 w-full h-8 rounded transition-colors",
-        isOver ? "bg-blue-500/10" : "group-hover:bg-slate-100"
+        isOver ? "bg-blue-500/10" : "group-hover:bg-gray-100"
       )} />
       
       {/* Step marker (small dot) */}
       {step % 25 === 0 && (
-        <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">
+        <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400">
           {step}%
         </div>
       )}
@@ -161,8 +161,8 @@ export function ProgressMarker({ issue, step, isOverlay }: { issue: Issue, step:
       {assignee ? (
         <img src={assignee.avatar} alt={assignee.name} className="w-8 h-8 min-w-[32px] min-h-[32px] flex-shrink-0 rounded-full object-cover border-2 border-white shadow-sm bg-white" />
       ) : (
-        <div className="w-8 h-8 min-w-[32px] min-h-[32px] flex-shrink-0 rounded-full border-2 border-slate-900 bg-white flex items-center justify-center shadow-sm">
-          <span className="text-[10px] text-slate-900 font-bold">{step}%</span>
+        <div className="w-8 h-8 min-w-[32px] min-h-[32px] flex-shrink-0 rounded-full border-2 border-gray-900 bg-white flex items-center justify-center shadow-sm">
+          <span className="text-[10px] text-gray-900 font-bold">{step}%</span>
         </div>
       )}
     </div>

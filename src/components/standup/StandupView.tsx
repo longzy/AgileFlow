@@ -119,11 +119,11 @@ function ActiveArea({ issues }: { issues: Issue[] }) {
   return (
     <div 
       ref={setNodeRef}
-      className={`flex-1 p-8 overflow-y-auto bg-white transition-colors ${isOver ? 'bg-slate-50' : ''}`}
+      className={`flex-1 p-8 overflow-y-auto bg-white transition-colors ${isOver ? 'bg-gray-50' : ''}`}
     >
       <div className="max-w-5xl mx-auto space-y-4 min-h-full pb-32">
         {issues.length === 0 ? (
-          <div className="h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-2xl bg-slate-50/50">
+          <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
             Drag tasks here to start
           </div>
         ) : (
