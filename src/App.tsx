@@ -13,7 +13,7 @@ import { useStore } from './store/useStore';
 import { LogOut } from 'lucide-react';
 
 export default function App() {
-  const { activeView, fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket } = useStore();
+  const { activeView, fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket, logout } = useStore();
 
   useEffect(() => {
     if (currentUser) {
@@ -61,13 +61,17 @@ export default function App() {
             {activeView === 'planning' ? 'Planning' : 'Standup'}
           </h2>
           <div className="ml-auto flex items-center gap-2">
-            <div className="text-sm text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
-              {selectedBoard.name}
-            </div>
             <button
               onClick={clearSelectedBoard}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="text-sm text-slate-500 font-medium bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 hover:bg-slate-100 hover:border-slate-200 transition-all cursor-pointer flex items-center gap-2"
               title="Switch Board"
+            >
+              {selectedBoard.name}
+            </button>
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Logout"
             >
               <LogOut className="w-4 h-4" />
             </button>
