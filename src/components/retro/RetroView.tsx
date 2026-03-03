@@ -13,7 +13,7 @@ export function RetroView() {
   const { connect, disconnect, room, error } = useRetroStore();
 
   useEffect(() => {
-    if (roomId && currentUser) {
+    if (roomId && currentUser?.id) {
       const isCreating = location.state?.isCreating;
       const template = location.state?.template;
       connect(roomId, currentUser, isCreating, template);
@@ -21,7 +21,7 @@ export function RetroView() {
     return () => {
       disconnect();
     };
-  }, [roomId, currentUser, connect, disconnect, location.state]);
+  }, [roomId, currentUser?.id, connect, disconnect, location.state?.isCreating, location.state?.template]);
 
   if (!roomId) {
     return <RetroLobby />;

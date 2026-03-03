@@ -33,6 +33,18 @@ export const useRetroStore = create<RetroState>((set, get) => ({
   error: null,
 
   connect: (roomId: string, user: User, isCreating?: boolean, template?: string) => {
+    const { socket: existingSocket, room } = get();
+    
+    // If already connected to the same room, do nothing
+    if (existingSocket && room?.id === roomId) {
+      return;
+    }
+
+    // If connected to a different room, disconnect first
+    if (existingSocket) {
+      existingSocket.disconnect();
+    }
+
     const socket = io();
     
     socket.on("connect", () => {
