@@ -3,6 +3,9 @@ import { retroRepo } from "../repositories/retro";
 import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../shared/retro";
 import crypto from "crypto";
 
+// Run cleanup on startup
+retroRepo.cleanup();
+
 interface User {
   id: string;
   name: string;
@@ -54,6 +57,7 @@ export function setupRetroSocket(io: Server, socket: Socket) {
       hostId,
       template,
       stage: "WRITING",
+      createdAt: Date.now(),
       cards: [],
       votes: {},
       actionPoints: [],
@@ -81,6 +85,21 @@ export function setupRetroSocket(io: Server, socket: Socket) {
         io.to(`retro:${roomId}`).emit("retro:state", room);
       }
     }
+  });
+
+  // Delete Room (Manual)
+  socket.on("retro:delete_room", ({ roomId, userId }: { roomId: string; userId: string }) => {
+    const room = retroRepo.getRoom(roomId);
+    if (!room) return;
+    if (room.hostId !== userId) {
+      socket.emit("retro:error", "Only host can delete room");
+      return;
+    }
+
+    retroRepo.deleteRoom(roomId);
+    io.to(`retro:${roomId}`).emit("retro:deleted");
+    // Force disconnect all clients in room
+    io.in(`retro:${roomId}`).disconnectSockets();
   });
 
   // Change Stage

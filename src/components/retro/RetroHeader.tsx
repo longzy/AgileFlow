@@ -1,6 +1,6 @@
 import { RetroRoom, RetroStage } from "@/shared/retro";
 import { useRetroStore } from "../../stores/useRetroStore";
-import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Users } from "lucide-react";
+import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Users, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserListDrawer } from "./UserListDrawer";
 
@@ -13,17 +13,24 @@ interface RetroHeaderProps {
 const STAGES: RetroStage[] = ["WRITING", "REVIEW", "VOTING", "ACTION", "DONE"];
 
 export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
-  const { changeStage, toggleTimer } = useRetroStore();
+  const { changeStage, toggleTimer, deleteRoom } = useRetroStore();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showTimerSettings, setShowTimerSettings] = useState(false);
   const [customMinutes, setCustomMinutes] = useState(5);
   const [copied, setCopied] = useState(false);
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(room.id);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDeleteRoom = () => {
+    if (confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
+      deleteRoom();
+    }
   };
 
   useEffect(() => {
@@ -60,6 +67,13 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   };
 
   const handleNextStage = () => {
+    // If timer is running and not paused, ask for confirmation
+    if (timeLeft !== null && timeLeft > 0 && !room.timerPausedAt) {
+      if (!confirm("Timer is still running. Are you sure you want to proceed to the next stage?")) {
+        return;
+      }
+    }
+
     const currentIndex = STAGES.indexOf(room.stage);
     if (currentIndex < STAGES.length - 1) {
       changeStage(STAGES[currentIndex + 1]);
@@ -122,6 +136,7 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           isOpen={isUserDrawerOpen} 
           onClose={() => setIsUserDrawerOpen(false)} 
           users={room.users || []} 
+          hostId={room.hostId}
         />
 
         {isHost && room.stage !== "DONE" && (
@@ -185,23 +200,32 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           </div>
         )}
 
-        {room.stage === "DONE" && (
-          <button
-            onClick={() => {
-              // Export logic
-              const markdown = `# Retro Export\n\n${room.cards.map(c => `- [${c.column}] ${c.text}`).join('\n')}`;
-              const blob = new Blob([markdown], { type: 'text/markdown' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `retro-${room.id}.md`;
-              a.click();
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <Download className="w-4 h-4" />
-            Export Markdown
-          </button>
+        {isHost && room.stage === "DONE" && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                // Export logic
+                const markdown = `# Retro Export\n\n${room.cards.map(c => `- [${c.column}] ${c.text}`).join('\n')}`;
+                const blob = new Blob([markdown], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `retro-${room.id}.md`;
+                a.click();
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              Export Markdown
+            </button>
+            <button
+              onClick={handleDeleteRoom}
+              className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors shadow-sm border border-red-100"
+              title="Delete Room"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
     </header>

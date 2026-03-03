@@ -24,6 +24,7 @@ interface RetroState {
   updateAction: (actionId: string, updates: Partial<RetroActionPoint>) => void;
   toggleTimer: () => void;
   mergeCards: (sourceCardId: string, targetCardId: string) => void;
+  deleteRoom: () => void;
 }
 
 export const useRetroStore = create<RetroState>((set, get) => ({
@@ -63,6 +64,11 @@ export const useRetroStore = create<RetroState>((set, get) => ({
       set({ error });
     });
 
+    socket.on("retro:deleted", () => {
+      set({ room: null, error: "Room has been deleted by host" });
+      window.location.href = "/retro";
+    });
+
     set({ socket, user });
   },
 
@@ -78,6 +84,13 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     const { socket, user } = get();
     if (socket && user) {
       socket.emit("retro:create", { roomId, hostId, template, user });
+    }
+  },
+
+  deleteRoom: () => {
+    const { socket, room, user } = get();
+    if (socket && room && user) {
+      socket.emit("retro:delete_room", { roomId: room.id, userId: user.id });
     }
   },
 

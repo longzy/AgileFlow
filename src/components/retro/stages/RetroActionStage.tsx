@@ -1,6 +1,6 @@
-import { RetroRoom } from "@/shared/retro";
+import { RetroRoom, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../stores/useRetroStore";
-import { CheckCircle, Circle, User, Calendar } from "lucide-react";
+import { CheckCircle, Circle, User, Calendar, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface Props {
@@ -12,21 +12,21 @@ export function RetroActionStage({ room, isHost }: Props) {
   const { updateAction } = useRetroStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
-  const [editOwner, setEditOwner] = useState("");
+  const [editOwnerId, setEditOwnerId] = useState("");
   const [editDate, setEditDate] = useState("");
 
   const handleEdit = (action: any) => {
     if (!isHost) return;
     setEditingId(action.id);
     setEditDesc(action.description);
-    setEditOwner(action.owner || "");
+    setEditOwnerId(action.owner || "");
     setEditDate(action.dueDate || "");
   };
 
   const handleSave = (actionId: string) => {
     updateAction(actionId, {
       description: editDesc,
-      owner: editOwner,
+      owner: editOwnerId,
       dueDate: editDate,
     });
     setEditingId(null);
@@ -37,6 +37,10 @@ export function RetroActionStage({ room, isHost }: Props) {
     updateAction(actionId, {
       status: currentStatus === "todo" ? "done" : "todo"
     });
+  };
+
+  const getUserById = (userId: string) => {
+    return room.users?.find(u => u.id === userId);
   };
 
   return (
@@ -77,15 +81,23 @@ export function RetroActionStage({ room, isHost }: Props) {
                         rows={2}
                       />
                       <div className="flex gap-4">
-                        <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <input 
-                            type="text" 
-                            placeholder="Owner" 
-                            value={editOwner}
-                            onChange={(e) => setEditOwner(e.target.value)}
-                            className="flex-1 outline-none text-sm"
-                          />
+                        <div className="flex-1 relative">
+                          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 w-full">
+                            <User className="w-4 h-4 text-gray-400" />
+                            <select
+                              value={editOwnerId}
+                              onChange={(e) => setEditOwnerId(e.target.value)}
+                              className="flex-1 outline-none text-sm bg-transparent appearance-none cursor-pointer"
+                            >
+                              <option value="">Unassigned</option>
+                              {room.users?.map(user => (
+                                <option key={user.id} value={user.id}>
+                                  {user.name}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none absolute right-3" />
+                          </div>
                         </div>
                         <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
@@ -93,13 +105,23 @@ export function RetroActionStage({ room, isHost }: Props) {
                             type="date" 
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
-                            className="flex-1 outline-none text-sm"
+                            className="flex-1 outline-none text-sm bg-transparent"
                           />
                         </div>
                       </div>
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingId(null)} className="text-sm text-gray-500 hover:text-gray-700 font-medium">Cancel</button>
-                        <button onClick={() => handleSave(action.id)} className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 font-medium">Save</button>
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button 
+                          onClick={() => setEditingId(null)} 
+                          className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => handleSave(action.id)} 
+                          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                          Save
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -111,13 +133,32 @@ export function RetroActionStage({ room, isHost }: Props) {
                         {action.description}
                       </p>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1.5">
-                          <User className="w-4 h-4" />
-                          <span>{action.owner || "Unassigned"}</span>
+                        <div className="flex items-center gap-2">
+                          {action.owner ? (
+                            <>
+                              <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+                                {getUserById(action.owner)?.avatar ? (
+                                  <img src={getUserById(action.owner)?.avatar} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-[10px] font-bold text-gray-500">
+                                    {getUserById(action.owner)?.name?.charAt(0).toUpperCase() || "?"}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="font-medium text-gray-700">
+                                {getUserById(action.owner)?.name || "Unknown User"}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <User className="w-4 h-4 text-gray-400" />
+                              <span className="text-gray-400 italic">Unassigned</span>
+                            </>
+                          )}
                         </div>
                         {action.dueDate && (
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-4 h-4 text-gray-400" />
                             <span>{action.dueDate}</span>
                           </div>
                         )}

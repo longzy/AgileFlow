@@ -29,6 +29,7 @@ export interface RetroRoom {
   hostId: string;
   template: string;
   stage: RetroStage;
+  createdAt: number; // Timestamp
   endTime?: number | null;
   timerPausedAt?: number | null;
   cards: RetroCard[];

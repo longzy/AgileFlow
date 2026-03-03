@@ -53,5 +53,43 @@ export const retroRepo = {
     const data = readData();
     delete data.rooms[roomId];
     writeData(data);
+  },
+
+  cleanup() {
+    const data = readData();
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const THIRTY_DAYS = 30 * ONE_DAY;
+
+    let deletedCount = 0;
+    Object.keys(data.rooms).forEach(roomId => {
+      const room = data.rooms[roomId];
+      // Backfill createdAt if missing
+      if (!room.createdAt) {
+        room.createdAt = now;
+      }
+
+      const age = now - room.createdAt;
+
+      // 1. Delete empty rooms older than 24h (no cards, no actions)
+      if (age > ONE_DAY && room.cards.length === 0 && room.actionPoints.length === 0) {
+        delete data.rooms[roomId];
+        deletedCount++;
+        return;
+      }
+
+      // 2. Delete very old rooms (> 30 days) even if they have content
+      // (Optional: In a real app, you might archive these instead)
+      if (age > THIRTY_DAYS) {
+        delete data.rooms[roomId];
+        deletedCount++;
+        return;
+      }
+    });
+
+    if (deletedCount > 0) {
+      console.log(`[Retro] Cleaned up ${deletedCount} old/empty rooms.`);
+      writeData(data);
+    }
   }
 };
