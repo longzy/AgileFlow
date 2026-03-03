@@ -1,4 +1,5 @@
 import { ProxyAgent, setGlobalDispatcher } from "undici";
+// Force UI sync
 import { config } from "../config";
 
 export function setupProxy() {

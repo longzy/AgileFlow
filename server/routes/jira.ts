@@ -12,7 +12,7 @@ router.post("/issue/:issueId/status", async (req, res) => {
   try {
     const result = await updateIssueStatus(issueId, statusCategory);
     if (!result.success) {
-      return res.status(400).json({ error: result.error });
+      return res.status(400).json({ error: (result as any).error || (result as any).warning || "Failed to update status" });
     }
     res.json({ success: true });
   } catch (error) {

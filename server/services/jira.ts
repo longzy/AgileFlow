@@ -1,4 +1,5 @@
 import { config } from "../config";
+// Force UI sync
 import { getMockData, getMockBoards } from "./jiraMock";
 
 const getJiraHeaders = () => {

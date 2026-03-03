@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
+// Force UI sync
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Issue, IssueStatus } from '../../types';
 import { IssueCard } from './IssueCard';

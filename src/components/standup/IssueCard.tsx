@@ -1,4 +1,5 @@
 import { useSortable } from '@dnd-kit/sortable';
+// Force UI sync
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';

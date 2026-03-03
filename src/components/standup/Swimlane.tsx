@@ -1,4 +1,5 @@
 import React from 'react';
+// Force UI sync
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';

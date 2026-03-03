@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+// Force UI sync
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { Issue, Sprint, User, IssueStatus, Vote, Board } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';

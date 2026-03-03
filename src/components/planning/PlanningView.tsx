@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+// Force UI sync
 import { useStore } from '../../store/useStore';
 import { IssueList } from './IssueList';
 import { EstimationBoard } from './EstimationBoard';

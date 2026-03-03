@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// Force UI sync
 import { useStore } from '../../store/useStore';
 import { Issue, Vote } from '../../types';
 import { Check, RotateCcw, Play, Crown } from 'lucide-react';

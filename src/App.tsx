@@ -8,6 +8,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './components/layout/Sidebar';
 import { PlanningView } from './components/planning/PlanningView';
 import { StandupView } from './components/standup/StandupView';
+import { RetroView } from './components/retro/RetroView';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { BoardSelectionScreen } from './components/auth/BoardSelectionScreen';
 import { useStore } from './store/useStore';
@@ -49,6 +50,7 @@ export default function App() {
   }
 
   const isStandup = location.pathname === '/standup';
+  const isRetro = location.pathname.startsWith('/retro');
 
   return (
     <div className="flex h-screen w-full bg-white text-gray-800 overflow-hidden font-sans selection:bg-gray-900/10">
@@ -62,7 +64,7 @@ export default function App() {
       <main className="flex-1 flex flex-col relative z-10 bg-white">
         <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {isStandup ? 'Standup' : 'Planning'}
+            {isStandup ? 'Standup' : isRetro ? 'Retro' : 'Planning'}
           </h2>
           <div className="ml-auto flex items-center gap-2">
             <button
@@ -85,6 +87,8 @@ export default function App() {
         <Routes>
           <Route path="/planning" element={<PlanningView />} />
           <Route path="/standup" element={<StandupView />} />
+          <Route path="/retro" element={<RetroView />} />
+          <Route path="/retro/:roomId" element={<RetroView />} />
           <Route path="*" element={<Navigate to="/planning" replace />} />
         </Routes>
       </main>

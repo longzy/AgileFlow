@@ -7,6 +7,7 @@ import { config } from "./server/config";
 import { setupProxy } from "./server/utils/proxy";
 import { setupSocket } from "./server/socket";
 import jiraRoutes from "./server/routes/jira";
+import retroRoutes from "./server/routes/retro";
 
 // Setup Proxy
 setupProxy();
@@ -28,6 +29,7 @@ async function startServer() {
 
   // API Routes
   app.use("/api/jira", jiraRoutes);
+  app.use("/api/retro", retroRoutes);
 
   // Vite middleware for development
   if (config.NODE_ENV !== "production") {

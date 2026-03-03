@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle } from 'lucide-react';
+// Force UI sync
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
 

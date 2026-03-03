@@ -1,4 +1,5 @@
 import { Server, Socket } from "socket.io";
+import { setupRetroSocket } from "./retro";
 
 interface User {
   id: string;
@@ -45,6 +46,9 @@ export function setupSocket(io: Server) {
   io.on("connection", (socket: Socket) => {
     console.log("User connected:", socket.id);
     clients.set(socket.id, { socketId: socket.id });
+
+    // Setup retro socket handlers
+    setupRetroSocket(io, socket);
 
     socket.on("join_room", (roomId) => {
       socket.join(roomId);
