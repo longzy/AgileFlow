@@ -21,8 +21,21 @@ interface RetroData {
 
 function readData(): RetroData {
   try {
-    const data = fs.readFileSync(RETRO_FILE, "utf-8");
-    return JSON.parse(data);
+    if (!fs.existsSync(RETRO_FILE)) {
+      return { rooms: {} };
+    }
+    const fileContent = fs.readFileSync(RETRO_FILE, "utf-8");
+    if (!fileContent.trim()) {
+      return { rooms: {} };
+    }
+    const data = JSON.parse(fileContent);
+    if (!data || typeof data !== 'object') {
+      return { rooms: {} };
+    }
+    if (!data.rooms) {
+      data.rooms = {};
+    }
+    return data;
   } catch (error) {
     console.error("Error reading retro data:", error);
     return { rooms: {} };
@@ -57,6 +70,8 @@ export const retroRepo = {
 
   cleanup() {
     const data = readData();
+    if (!data.rooms) return;
+
     const now = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
     const THIRTY_DAYS = 30 * ONE_DAY;
