@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Issue, Vote } from '../../types';
 import { Check, RotateCcw, Play, Crown } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import confetti from 'canvas-confetti';
 
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21];
 
@@ -22,6 +23,38 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
   useEffect(() => {
     joinRoom(issue.id);
   }, [issue.id, joinRoom]);
+
+  // Confetti effect when cards are revealed
+  useEffect(() => {
+    if (revealed) {
+      const duration = 3 * 1000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.8 },
+          colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
+          zIndex: 100
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.8 },
+          colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
+          zIndex: 100
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [revealed]);
 
   const handleVote = (points: number) => {
     if (revealed || !currentUser) return;

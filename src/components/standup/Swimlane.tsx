@@ -68,22 +68,11 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
       )}
     >
       <div className="flex justify-between items-center px-2 pl-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0 mr-4">
-          <div {...attributes} {...listeners} className={cn("text-gray-300 flex-shrink-0", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
+        <div className="flex items-center gap-3">
+          <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
           </div>
-          
-          <div className={cn(
-            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border flex-shrink-0",
-            getTypeColor(issue.type)
-          )}>
-            {getTypeIcon(issue.type)}
-            <span>{issue.type || 'Task'}</span>
-          </div>
 
-          <span className="text-sm font-bold text-gray-900 tracking-tight flex-shrink-0">
-            {issue.key}
-          </span>
           {issue.priority && (
             <span className={cn(
               "w-2 h-2 rounded-full flex-shrink-0",
@@ -92,7 +81,19 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
               "bg-blue-500"
             )} title={`Priority: ${issue.priority}`} />
           )}
-          <span className="text-gray-600 font-medium truncate" title={issue.summary}>{issue.summary}</span>
+          
+          <div className={cn(
+            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+            getTypeColor(issue.type)
+          )}>
+            {getTypeIcon(issue.type)}
+            <span>{issue.type || 'Task'}</span>
+          </div>
+
+          <span className="text-sm font-bold text-gray-900 tracking-tight">
+            {issue.key}
+          </span>
+          <span className="text-gray-600 font-medium" title={issue.summary}>{issue.summary}</span>
         </div>
         <span className={cn(
           "text-lg font-bold w-24 text-right tabular-nums flex-shrink-0 flex items-center justify-end gap-2",
