@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, BookOpen, CheckSquare, Bug } from 'lucide-react';
 // Force UI sync
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
@@ -10,6 +10,22 @@ interface IssueListProps {
 }
 
 export function IssueList({ issues, selectedId, onSelect }: IssueListProps) {
+  const getTypeColor = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'story': return "text-emerald-700 bg-emerald-50 border-emerald-200";
+      case 'bug': return "text-rose-700 bg-rose-50 border-rose-200";
+      default: return "text-sky-700 bg-sky-50 border-sky-200";
+    }
+  };
+
+  const getTypeIcon = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'story': return <BookOpen className="w-3 h-3" />;
+      case 'bug': return <Bug className="w-3 h-3" />;
+      default: return <CheckSquare className="w-3 h-3" />;
+    }
+  };
+
   return (
     <div className="w-80 flex-shrink-0 bg-[#F9F9F9] flex flex-col border-r border-gray-100 h-full">
       <div className="p-6 border-b border-gray-100 bg-white">
@@ -32,12 +48,21 @@ export function IssueList({ issues, selectedId, onSelect }: IssueListProps) {
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-900" />
             )}
             <div className="flex items-start justify-between mb-2">
-              <span className={cn(
-                "text-xs font-bold tracking-wider px-2 py-0.5 rounded-md",
-                selectedId === issue.id ? "bg-gray-100 text-gray-900" : "bg-gray-50 text-gray-500"
-              )}>
-                {issue.key}
-              </span>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+                  getTypeColor(issue.type)
+                )}>
+                  {getTypeIcon(issue.type)}
+                  <span>{issue.type || 'Task'}</span>
+                </div>
+                <span className={cn(
+                  "text-xs font-bold tracking-wider px-2 py-0.5 rounded-md",
+                  selectedId === issue.id ? "bg-gray-100 text-gray-900" : "bg-gray-50 text-gray-500"
+                )}>
+                  {issue.key}
+                </span>
+              </div>
               {issue.estimated ? (
                 <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold">
                   <CheckCircle2 className="w-3 h-3" />

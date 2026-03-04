@@ -257,6 +257,7 @@ export const getBoardData = async (boardId: string) => {
         storyPoints: issue.fields.customfield_10106,
         priority,
         assignee: assignee ? resolvedUsersMap.get(assignee.key) : undefined,
+        type: issue.fields.issuetype?.name || 'Task',
       };
     };
 

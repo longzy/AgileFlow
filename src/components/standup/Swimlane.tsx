@@ -5,13 +5,14 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, BookOpen, Bug, CheckSquare, CheckCircle2 } from 'lucide-react';
 
 const STEPS = Array.from({ length: 21 }, (_, i) => i * 5); // 0, 5, 10... 100
 
 export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issue, isOverlay }) => {
   const currentProgress = issue.progress || 0;
   const [displayProgress, setDisplayProgress] = React.useState(currentProgress);
+  const isCompleted = currentProgress === 100;
 
   // Sync local state when prop changes, but only if NOT dragging this specific issue's marker
   // We'll handle the drag update separately or let it sync after drag ends
@@ -37,12 +38,31 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
     zIndex: isDragging || isOverlay ? 50 : 1,
   };
 
+  const getTypeColor = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'story': return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case 'bug': return "bg-rose-50 text-rose-700 border-rose-200";
+      default: return "bg-sky-50 text-sky-700 border-sky-200";
+    }
+  };
+
+  const getTypeIcon = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'story': return <BookOpen className="w-3 h-3" />;
+      case 'bug': return <Bug className="w-3 h-3" />;
+      default: return <CheckSquare className="w-3 h-3" />;
+    }
+  };
+
   return (
     <div 
       ref={isOverlay ? undefined : setNodeRef}
       style={style}
       className={cn(
-        "bg-[#F9F9F9] rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors relative overflow-hidden",
+        "rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors relative overflow-hidden border",
+        isCompleted 
+          ? "bg-emerald-50/50 border-emerald-200 shadow-sm" 
+          : "bg-[#F9F9F9] border-transparent",
         isDragging && !isOverlay ? "opacity-50" : "",
         isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
       )}
@@ -52,6 +72,15 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
           </div>
+          
+          <div className={cn(
+            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+            getTypeColor(issue.type)
+          )}>
+            {getTypeIcon(issue.type)}
+            <span>{issue.type || 'Task'}</span>
+          </div>
+
           <span className="text-sm font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
@@ -65,14 +94,23 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           )}
           <span className="text-gray-600 font-medium">{issue.summary}</span>
         </div>
-        <span className="text-lg font-bold text-gray-900 w-16 text-right tabular-nums flex-shrink-0">{displayProgress}%</span>
+        <span className={cn(
+          "text-lg font-bold w-24 text-right tabular-nums flex-shrink-0 flex items-center justify-end gap-2",
+          isCompleted ? "text-emerald-600" : "text-gray-900"
+        )}>
+          {isCompleted && <CheckCircle2 className="w-5 h-5" />}
+          {displayProgress}%
+        </span>
       </div>
       
       <div className="flex gap-1 relative mt-5 mb-1 h-8 ml-3">
         {/* Background track line */}
         <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0" />
         <div 
-          className="absolute top-1/2 left-0 h-2 bg-gray-900 -translate-y-1/2 rounded-full z-0 transition-all duration-500" 
+          className={cn(
+            "absolute top-1/2 left-0 h-2 -translate-y-1/2 rounded-full z-0 transition-all duration-500",
+            isCompleted ? "bg-emerald-500" : "bg-gray-900"
+          )}
           style={{ width: `${displayProgress}%` }}
         />
 

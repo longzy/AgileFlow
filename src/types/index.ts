@@ -7,6 +7,20 @@ export interface User {
   isHost: boolean;
 }
 
+export interface Issue {
+  id: string;
+  key: string;
+  summary: string;
+  description?: string;
+  status: string;
+  estimated: boolean;
+  storyPoints?: number;
+  priority?: string;
+  assignee?: User;
+  progress?: number;
+  type?: 'Story' | 'Task' | 'Bug';
+}
+
 export interface Card {
   id: string;
   content: string;
