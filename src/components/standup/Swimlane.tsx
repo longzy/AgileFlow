@@ -98,7 +98,7 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           <span className="text-sm font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
-          <span className="text-gray-600 font-medium" title={issue.summary}>{issue.summary}</span>
+          <span className="text-gray-600 font-medium text-sm" title={issue.summary}>{issue.summary}</span>
           
           {!isCompleted && (
             <button 

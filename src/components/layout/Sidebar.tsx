@@ -1,13 +1,15 @@
 import { Calendar, LayoutDashboard, Layers, Settings, MessageSquare } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
 import { format, differenceInDays } from 'date-fns';
 
 export function Sidebar() {
   const { sprint, currentUser } = useStore();
+  const location = useLocation();
   
   const daysLeft = sprint ? differenceInDays(new Date(sprint.endDate), new Date()) : 0;
+  const isPlanning = location.pathname === '/planning';
 
   return (
     <aside className="w-64 flex-shrink-0 h-screen bg-[#F9F9F9] flex flex-col p-4 text-gray-600">
@@ -61,20 +63,32 @@ export function Sidebar() {
 
       <div className="mt-auto pt-6">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
-           <div className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">当前冲刺</div>
+           <div className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+             {isPlanning ? '计划冲刺' : '当前冲刺'}
+           </div>
            {sprint ? (
              <div>
                <div className="text-sm font-bold text-gray-900 mb-1">{sprint.name}</div>
-               <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                 <div 
-                   className="bg-gray-900 h-1.5 rounded-full" 
-                   style={{ width: `${Math.max(0, Math.min(100, ((14 - daysLeft) / 14) * 100))}%` }}
-                 />
-               </div>
-               <div className="text-xs text-gray-500">剩余 {daysLeft} 天</div>
+               {sprint.isActive ? (
+                 <>
+                   <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                     <div 
+                       className="bg-gray-900 h-1.5 rounded-full" 
+                       style={{ width: `${Math.max(0, Math.min(100, ((14 - daysLeft) / 14) * 100))}%` }}
+                     />
+                   </div>
+                   <div className="text-xs text-gray-500">剩余 {daysLeft} 天</div>
+                 </>
+               ) : (
+                 <div className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-lg inline-block mt-1">
+                   状态: Future
+                 </div>
+               )}
              </div>
            ) : (
-             <div className="text-xs text-gray-400">无活跃冲刺</div>
+             <div className="text-xs text-gray-400">
+               {isPlanning ? '无 Future 冲刺' : '无活跃冲刺'}
+             </div>
            )}
         </div>
 

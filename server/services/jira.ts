@@ -196,7 +196,14 @@ export const getBoards = async () => {
 
 export const getBoardData = async (boardId: string, sprintState: string = 'active') => {
   if (!config.JIRA.BASE_URL) {
-    return { ...getMockData(boardId), isMock: true };
+    const mockData = getMockData(boardId);
+    if (mockData.sprint) {
+      mockData.sprint.isActive = sprintState === 'active';
+      if (sprintState === 'future') {
+        mockData.sprint.name = 'Sprint 25 (Future)';
+      }
+    }
+    return { ...mockData, isMock: true };
   }
 
   try {
