@@ -8,6 +8,6 @@ export const config = {
     EMAIL: process.env.JIRA_EMAIL || "",
     API_TOKEN: process.env.JIRA_API_TOKEN || "",
     BOARD_ID: process.env.JIRA_BOARD_ID || "",
-    PROGRESS_FIELD_ID: process.env.JIRA_PROGRESS_FIELD_ID || "customfield_10016",
+    PROGRESS_FIELD_ID: process.env.JIRA_PROGRESS_FIELD_ID || "customfield_10207",
   }
 };

@@ -59,7 +59,7 @@ JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_EMAIL=your-email@example.com
 JIRA_API_TOKEN=your-jira-api-token
 JIRA_BOARD_ID=1
-JIRA_PROGRESS_FIELD_ID=customfield_10017
+JIRA_PROGRESS_FIELD_ID=customfield_10207
 ```
 
 > **提示**: 如果不配置 Jira 环境变量，系统将自动使用内置的 Mock 数据模式，方便本地开发和演示。
