@@ -5,6 +5,7 @@ import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useSensor, useSensors, PointerSensor, closestCenter } from "@dnd-kit/core";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { TimelineReviewStage } from "./TimelineReviewStage";
 
 interface Props {
   room: RetroRoom;
@@ -109,6 +110,10 @@ export function RetroReviewStage({ room, currentUser }: Props) {
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [editCardText, setEditCardText] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  if (room.template === "timeline") {
+    return <TimelineReviewStage room={room} currentUser={currentUser} />;
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

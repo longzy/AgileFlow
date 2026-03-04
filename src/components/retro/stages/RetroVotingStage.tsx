@@ -1,6 +1,7 @@
 import { RetroRoom, RetroCard } from "@/shared/retro";
 import { useRetroStore } from "../../../stores/useRetroStore";
 import { ThumbsUp, Layers } from "lucide-react";
+import { TimelineVotingStage } from "./TimelineVotingStage";
 
 interface Props {
   room: RetroRoom;
@@ -16,6 +17,10 @@ const TEMPLATE_COLUMNS: Record<string, string[]> = {
 export function RetroVotingStage({ room, currentUser }: Props) {
   const { vote, revokeVote } = useRetroStore();
   const columns = TEMPLATE_COLUMNS[room.template] || [];
+
+  if (room.template === "timeline") {
+    return <TimelineVotingStage room={room} currentUser={currentUser} />;
+  }
 
   const userVotes = room.votes[currentUser.id] || [];
   const votesRemaining = 3 - userVotes.length;

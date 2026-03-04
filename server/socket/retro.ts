@@ -16,6 +16,7 @@ const TEMPLATES = {
   "start-stop-continue": ["Start", "Stop", "Continue"],
   "went-well-improve-action": ["Went Well", "To Improve", "Action"],
   "mad-sad-glad": ["Mad", "Sad", "Glad"],
+  "timeline": ["Timeline"], // Add timeline template
 };
 
 export function setupRetroSocket(io: Server, socket: Socket) {

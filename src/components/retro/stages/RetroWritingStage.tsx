@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RetroRoom, RetroCard } from "@/shared/retro";
 import { useRetroStore } from "../../../stores/useRetroStore";
 import { Plus, Edit2, Check, EyeOff } from "lucide-react";
+import { TimelineWritingStage } from "./TimelineWritingStage";
 
 interface Props {
   room: RetroRoom;
@@ -22,6 +23,10 @@ export function RetroWritingStage({ room, currentUser }: Props) {
   const [editCardText, setEditCardText] = useState("");
   const [anonymous, setAnonymous] = useState(true);
 
+  if (room.template === "timeline") {
+    return <TimelineWritingStage room={room} currentUser={currentUser} />;
+  }
+
   const handleAddCard = (column: string) => {
     const text = newCardText[column]?.trim();
     if (text) {
@@ -38,7 +43,7 @@ export function RetroWritingStage({ room, currentUser }: Props) {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-w-0">
       <div className="flex justify-end mb-4">
         <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
           <input

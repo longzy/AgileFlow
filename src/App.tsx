@@ -61,8 +61,8 @@ export default function App() {
 
       <Sidebar />
       
-      <main className="flex-1 flex flex-col relative z-10 bg-white">
-        <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100">
+      <main className="flex-1 flex flex-col relative z-10 bg-white min-w-0">
+        <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100 shrink-0">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
             {isStandup ? 'Standup' : isRetro ? 'Retro' : 'Planning'}
           </h2>

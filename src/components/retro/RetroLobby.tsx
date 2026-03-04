@@ -45,6 +45,7 @@ export function RetroLobby() {
               <option value="start-stop-continue">Start / Stop / Continue</option>
               <option value="went-well-improve-action">Went Well / To Improve / Action</option>
               <option value="mad-sad-glad">Mad / Sad / Glad</option>
+              <option value="timeline">Timeline (10 Days)</option>
             </select>
           </div>
 

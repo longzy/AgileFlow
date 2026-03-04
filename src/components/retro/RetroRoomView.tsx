@@ -26,10 +26,10 @@ export function RetroRoomView() {
   const isHost = room.hostId === currentUser.id;
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+    <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden w-full min-w-0">
       <RetroHeader room={room} isHost={isHost} state={state} />
       
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-w-0">
         {state.matches("WRITING") && <RetroWritingStage room={room} currentUser={currentUser} />}
         {state.matches("REVIEW") && <RetroReviewStage room={room} currentUser={currentUser} />}
         {state.matches("VOTING") && <RetroVotingStage room={room} currentUser={currentUser} />}
