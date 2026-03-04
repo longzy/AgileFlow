@@ -72,9 +72,10 @@ router.get("/boards", async (req, res) => {
 // Get Board Data
 router.get("/board-data", async (req, res) => {
   const boardId = req.query.boardId as string || config.JIRA.BOARD_ID;
+  const state = req.query.state as string || 'active';
   
   try {
-    const data = await getBoardData(boardId);
+    const data = await getBoardData(boardId, state);
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch board data" });

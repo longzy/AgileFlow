@@ -194,24 +194,24 @@ export const getBoards = async () => {
   }
 };
 
-export const getBoardData = async (boardId: string) => {
+export const getBoardData = async (boardId: string, sprintState: string = 'active') => {
   if (!config.JIRA.BASE_URL) {
     return { ...getMockData(boardId), isMock: true };
   }
 
   try {
-    // Fetch active sprint
-    const sprintRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=active`, {
+    // Fetch sprint
+    const sprintRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=${sprintState}`, {
       headers: getJiraHeaders(),
       signal: AbortSignal.timeout(5000)
     });
     const sprintData = await sprintRes.json();
-    const activeSprint = sprintData.values?.[0];
+    const targetSprint = sprintData.values?.[0];
 
     // Fetch sprint issues
     let issuesData = { issues: [] };
-    if (activeSprint) {
-      const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${activeSprint.id}/issue`, {
+    if (targetSprint) {
+      const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${targetSprint.id}/issue`, {
         headers: getJiraHeaders(),
         signal: AbortSignal.timeout(5000)
       });
@@ -315,12 +315,12 @@ export const getBoardData = async (boardId: string) => {
     });
 
     return {
-      sprint: activeSprint ? {
-        id: activeSprint.id.toString(),
-        name: activeSprint.name,
-        startDate: activeSprint.startDate,
-        endDate: activeSprint.endDate,
-        isActive: true,
+      sprint: targetSprint ? {
+        id: targetSprint.id.toString(),
+        name: targetSprint.name,
+        startDate: targetSprint.startDate,
+        endDate: targetSprint.endDate,
+        isActive: sprintState === 'active',
       } : null,
       issues: allIssues,
       users: Array.from(resolvedUsersMap.values())

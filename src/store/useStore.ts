@@ -35,7 +35,7 @@ interface AppState {
   fetchBoards: () => Promise<void>;
   selectBoard: (board: Board) => void;
   clearSelectedBoard: () => void;
-  fetchBoardData: () => Promise<void>;
+  fetchBoardData: (sprintState?: 'active' | 'future') => Promise<void>;
   
   // Socket actions
   joinRoom: (roomId: string) => void;
@@ -330,7 +330,7 @@ export const useStore = create<AppState>()(
         };
       }),
 
-      fetchBoardData: async () => {
+      fetchBoardData: async (sprintState = 'active') => {
         const { selectedBoard, currentUser } = get();
         if (!selectedBoard || !currentUser) return;
         
@@ -339,7 +339,7 @@ export const useStore = create<AppState>()(
 
         set({ isLoading: true, error: null });
         try {
-          const res = await fetch(`/api/jira/board-data?boardId=${selectedBoard.id}`);
+          const res = await fetch(`/api/jira/board-data?boardId=${selectedBoard.id}&state=${sprintState}`);
           if (!res.ok) throw new Error('Failed to fetch board data');
           const data = await res.json();
           

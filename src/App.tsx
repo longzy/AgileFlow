@@ -26,9 +26,10 @@ export default function App() {
 
   useEffect(() => {
     if (selectedBoard) {
-      fetchBoardData();
+      const sprintState = location.pathname === '/planning' ? 'future' : 'active';
+      fetchBoardData(sprintState);
     }
-  }, [fetchBoardData, selectedBoard]);
+  }, [fetchBoardData, selectedBoard, location.pathname]);
 
   if (!currentUser) {
     return <LoginScreen />;
