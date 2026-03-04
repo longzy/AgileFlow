@@ -48,6 +48,7 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
   };
 
   const isCompleted = issue.status === 'in-progress' && issue.progress === 100;
+  const isPending = issue.status === 'pending';
 
   return (
     <div
@@ -59,7 +60,9 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
         "rounded-2xl p-4 transition-all group relative border overflow-hidden",
         isCompleted 
           ? "bg-emerald-50/50 border-emerald-200 shadow-sm ring-1 ring-emerald-100/50" 
-          : "bg-white border-transparent shadow-sm",
+          : isPending
+            ? "bg-amber-50/50 border-amber-200 shadow-sm ring-1 ring-amber-100/50 opacity-80"
+            : "bg-white border-transparent shadow-sm",
         isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
         isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
       )}
@@ -76,6 +79,11 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
           <span className="text-xs font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
+          {isPending && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+              Pending
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {issue.estimated && (
@@ -121,10 +129,10 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
           </div>
         ) : <div />}
         
-        {issue.status === 'in-progress' && (
+        {(issue.status === 'in-progress' || isPending) && (
           <div className={cn(
             "text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
-            isCompleted ? "bg-emerald-100 text-emerald-700" : "text-gray-900 bg-gray-100"
+            isCompleted ? "bg-emerald-100 text-emerald-700" : isPending ? "bg-amber-100 text-amber-700" : "text-gray-900 bg-gray-100"
           )}>
             {isCompleted && <CheckCircle2 className="w-3 h-3" />}
             {issue.progress}%

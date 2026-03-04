@@ -193,7 +193,7 @@ export const useStore = create<AppState>()(
         // Call API in background if status changed
         if (oldStatus !== status) {
           let statusCategory = 'new';
-          if (status === 'in-progress') statusCategory = 'indeterminate';
+          if (status === 'in-progress' || status === 'pending') statusCategory = 'indeterminate';
           if (status === 'done') statusCategory = 'done';
           
           fetch(`/api/jira/issue/${id}/status`, {

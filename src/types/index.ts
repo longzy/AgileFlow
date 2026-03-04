@@ -21,7 +21,7 @@ export interface Issue {
   type?: 'Story' | 'Task' | 'Bug';
 }
 
-export type IssueStatus = 'todo' | 'in-progress' | 'done';
+export type IssueStatus = 'todo' | 'in-progress' | 'done' | 'pending';
 
 export interface Card {
   id: string;

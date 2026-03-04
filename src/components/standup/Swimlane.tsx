@@ -5,14 +5,17 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
-import { GripVertical, BookOpen, Bug, CheckSquare, CheckCircle2 } from 'lucide-react';
+import { GripVertical, BookOpen, Bug, CheckSquare, CheckCircle2, PauseCircle, PlayCircle } from 'lucide-react';
+import { useStore } from '../../store/useStore';
 
 const STEPS = Array.from({ length: 21 }, (_, i) => i * 5); // 0, 5, 10... 100
 
 export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issue, isOverlay }) => {
+  const { updateIssueStatus } = useStore();
   const currentProgress = issue.progress || 0;
   const [displayProgress, setDisplayProgress] = React.useState(currentProgress);
   const isCompleted = currentProgress === 100;
+  const isPending = issue.status === 'pending';
 
   // Sync local state when prop changes, but only if NOT dragging this specific issue's marker
   // We'll handle the drag update separately or let it sync after drag ends
@@ -62,7 +65,9 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
         "rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors relative overflow-hidden border",
         isCompleted 
           ? "bg-emerald-50/50 border-emerald-200 shadow-sm" 
-          : "bg-[#F9F9F9] border-transparent",
+          : isPending
+            ? "bg-amber-50/50 border-amber-200 shadow-sm opacity-80"
+            : "bg-[#F9F9F9] border-transparent",
         isDragging && !isOverlay ? "opacity-50" : "",
         isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
       )}
@@ -94,12 +99,26 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
             {issue.key}
           </span>
           <span className="text-gray-600 font-medium" title={issue.summary}>{issue.summary}</span>
+          
+          {!isCompleted && (
+            <button 
+              onClick={() => updateIssueStatus(issue.id, isPending ? 'in-progress' : 'pending')}
+              className={cn(
+                "ml-2 p-1 rounded-full hover:bg-white/50 transition-colors",
+                isPending ? "text-amber-600 bg-amber-100/50" : "text-gray-400 hover:text-gray-600"
+              )}
+              title={isPending ? "Resume" : "Mark as Pending"}
+            >
+              {isPending ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+            </button>
+          )}
         </div>
         <span className={cn(
           "text-lg font-bold w-24 text-right tabular-nums flex-shrink-0 flex items-center justify-end gap-2",
-          isCompleted ? "text-emerald-600" : "text-gray-900"
+          isCompleted ? "text-emerald-600" : isPending ? "text-amber-600" : "text-gray-900"
         )}>
           {isCompleted && <CheckCircle2 className="w-5 h-5" />}
+          {isPending && <span className="text-xs font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full mr-1">Pending</span>}
           {displayProgress}%
         </span>
       </div>
@@ -110,7 +129,7 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
         <div 
           className={cn(
             "absolute top-1/2 left-0 h-2 -translate-y-1/2 rounded-full z-0 transition-all duration-500",
-            isCompleted ? "bg-emerald-500" : "bg-gray-900"
+            isCompleted ? "bg-emerald-500" : isPending ? "bg-amber-400" : "bg-gray-900"
           )}
           style={{ width: `${displayProgress}%` }}
         />
