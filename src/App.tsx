@@ -26,8 +26,13 @@ export default function App() {
 
   useEffect(() => {
     if (selectedBoard) {
-      const sprintState = location.pathname === '/planning' ? 'future' : 'active';
-      fetchBoardData(sprintState);
+      if (location.pathname === '/planning') {
+        fetchBoardData('future');
+      } else if (location.pathname === '/standup' || location.pathname.startsWith('/retro')) {
+        fetchBoardData('active');
+      }
+      // If it's any other path (like '/'), the <Navigate> component will redirect us to '/planning',
+      // which will trigger this effect again with the correct path, avoiding duplicate/incorrect requests.
     }
   }, [fetchBoardData, selectedBoard, location.pathname]);
 
