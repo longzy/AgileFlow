@@ -81,6 +81,19 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
       }
     };
 
+    // Check if there are no cards when leaving WRITING stage
+    if (room.stage === "WRITING" && (!room.cards || room.cards.length === 0)) {
+      confirm({
+        title: "No Cards Submitted",
+        message: "No one has submitted any cards yet. Are you sure you want to proceed to the next stage?",
+        confirmLabel: "Proceed Anyway",
+        cancelLabel: "Wait",
+        type: "warning",
+        onConfirm: proceed
+      });
+      return;
+    }
+
     // If timer is running and not paused, ask for confirmation
     if (timeLeft !== null && timeLeft > 0 && !room.timerPausedAt) {
       confirm({
