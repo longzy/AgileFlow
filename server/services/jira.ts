@@ -70,6 +70,37 @@ export const updateIssueStatus = async (issueId: string, targetStatusCategory: s
   }
 };
 
+export const updateIssuePendingStatus = async (issueId: string, isPending: boolean) => {
+  if (!config.JIRA.BASE_URL) {
+    console.log(`[Mock] Updating issue ${issueId} pending status (customfield_10208) to ${isPending ? 1 : 0}`);
+    return { success: true };
+  }
+
+  try {
+    const updateBody = {
+      fields: {
+        customfield_10208: isPending ? 1 : 0
+      }
+    };
+
+    const updateRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}`, {
+      method: 'PUT',
+      headers: getJiraHeaders(),
+      body: JSON.stringify(updateBody),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!updateRes.ok) {
+      throw new Error(`Failed to update pending status: ${updateRes.statusText}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Jira Update Pending Status Error:", error);
+    throw error;
+  }
+};
+
 export const updateIssueProgress = async (issueId: string, progress: number) => {
   if (!config.JIRA.BASE_URL) {
     console.log(`[Mock] Updating issue ${issueId} progress to ${progress}%`);
@@ -263,11 +294,12 @@ export const getBoardData = async (boardId: string) => {
 
     const allIssues = (issuesData.issues || []).map((i: any) => {
       const statusCategory = i.fields.status?.statusCategory?.key;
+      const isPending = i.fields.customfield_10208 === 1 || i.fields.customfield_10208 === "1";
       let mappedStatus = 'todo';
       
       let progress = 0;
       if (statusCategory === 'indeterminate') {
-        mappedStatus = 'in-progress';
+        mappedStatus = isPending ? 'pending' : 'in-progress';
         // progress = 50;
       }
       if (statusCategory === 'done') {

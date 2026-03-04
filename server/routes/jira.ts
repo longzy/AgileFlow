@@ -1,8 +1,21 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
+
+// Update Issue Pending Status
+router.post("/issue/:issueId/pending", async (req, res) => {
+  const { issueId } = req.params;
+  const { isPending } = req.body;
+
+  try {
+    await updateIssuePendingStatus(issueId, isPending);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update Jira issue pending status" });
+  }
+});
 
 // Update Issue Status
 router.post("/issue/:issueId/status", async (req, res) => {

@@ -201,6 +201,14 @@ export const useStore = create<AppState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
           }).catch(err => console.error('Failed to update status', err));
+
+          // Update pending custom field
+          const isPending = status === 'pending';
+          fetch(`/api/jira/issue/${id}/pending`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isPending })
+          }).catch(err => console.error('Failed to update pending status', err));
         }
 
         return { issues: updatedIssues };
@@ -300,6 +308,15 @@ export const useStore = create<AppState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
           }).catch(err => console.error('Failed to update status', err));
+
+          // If it was pending and now it's in-progress or done, clear the pending flag
+          if (issue.status === 'pending') {
+            fetch(`/api/jira/issue/${id}/pending`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ isPending: false })
+            }).catch(err => console.error('Failed to update pending status', err));
+          }
         }
 
         return { issues: newIssues };
