@@ -3,6 +3,7 @@ import { useRetroStore } from "../../stores/useRetroStore";
 import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Users, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserListDrawer } from "./UserListDrawer";
+import { useConfirm } from "../../context/ConfirmContext";
 
 interface RetroHeaderProps {
   room: RetroRoom;
@@ -19,7 +20,7 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   const [customMinutes, setCustomMinutes] = useState(5);
   const [copied, setCopied] = useState(false);
   const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { confirm } = useConfirm();
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(room.id);
@@ -28,9 +29,15 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   };
 
   const handleDeleteRoom = () => {
-    if (confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
-      deleteRoom();
-    }
+    confirm({
+      title: "Delete Room",
+      message: "Are you sure you want to delete this room? This action cannot be undone.",
+      confirmLabel: "Delete",
+      type: "danger",
+      onConfirm: () => {
+        deleteRoom();
+      }
+    });
   };
 
   useEffect(() => {
@@ -67,17 +74,26 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   };
 
   const handleNextStage = () => {
+    const proceed = () => {
+      const currentIndex = STAGES.indexOf(room.stage);
+      if (currentIndex < STAGES.length - 1) {
+        changeStage(STAGES[currentIndex + 1]);
+      }
+    };
+
     // If timer is running and not paused, ask for confirmation
     if (timeLeft !== null && timeLeft > 0 && !room.timerPausedAt) {
-      if (!confirm("Timer is still running. Are you sure you want to proceed to the next stage?")) {
-        return;
-      }
+      confirm({
+        title: "Timer Running",
+        message: "Timer is still running. Are you sure you want to proceed to the next stage?",
+        confirmLabel: "Proceed",
+        type: "warning",
+        onConfirm: proceed
+      });
+      return;
     }
 
-    const currentIndex = STAGES.indexOf(room.stage);
-    if (currentIndex < STAGES.length - 1) {
-      changeStage(STAGES[currentIndex + 1]);
-    }
+    proceed();
   };
 
   return (
