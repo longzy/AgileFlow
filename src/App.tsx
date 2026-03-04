@@ -39,17 +39,6 @@ export default function App() {
     return <BoardSelectionScreen />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-gray-50 text-gray-700">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-gray-500 font-medium">Loading data...</p>
-        </div>
-      </div>
-    );
-  }
-
   const isStandup = location.pathname === '/standup';
   const isRetro = location.pathname.startsWith('/retro');
 

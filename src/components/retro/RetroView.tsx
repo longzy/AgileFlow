@@ -46,8 +46,11 @@ export function RetroView() {
 
   if (!room) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      <div className="flex-1 flex items-center justify-center bg-gray-50/50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <p className="text-sm font-medium text-gray-500">Joining room...</p>
+        </div>
       </div>
     );
   }
