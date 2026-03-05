@@ -309,13 +309,14 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
         mappedStatus = isPending ? 'pending' : 'in-progress';
         // progress = 50;
       }
-      if (statusCategory === 'done') {
-        mappedStatus = 'done';
-        progress = 100;
-      }
 
       if (i.fields[config.JIRA.PROGRESS_FIELD_ID] !== undefined && i.fields[config.JIRA.PROGRESS_FIELD_ID] !== null) {
         progress = Number(i.fields[config.JIRA.PROGRESS_FIELD_ID]);
+      }
+
+      if (statusCategory === 'done') {
+        mappedStatus = 'done';
+        progress = 100;
       }
 
       return { ...mapJiraIssue(i, mappedStatus), progress };
