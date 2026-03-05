@@ -13,10 +13,19 @@ import { LoginScreen } from './components/auth/LoginScreen';
 import { BoardSelectionScreen } from './components/auth/BoardSelectionScreen';
 import { useStore } from './store/useStore';
 import { LogOut } from 'lucide-react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorFallback } from './components/common/ErrorFallback';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function App() {
   const { fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket, logout } = useStore();
   const location = useLocation();
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   useEffect(() => {
     if (currentUser) {
@@ -48,8 +57,13 @@ export default function App() {
   const isRetro = location.pathname.startsWith('/retro');
 
   return (
-    <div className="flex h-screen w-full bg-white text-gray-800 overflow-hidden font-sans selection:bg-gray-900/10">
-      {/* Background decoration - subtle or removed for cleaner look */}
+    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+      <div className="flex h-screen w-full bg-white text-gray-800 overflow-hidden font-sans selection:bg-gray-900/10">
+        <Toaster position="top-right" toastOptions={{
+          className: 'text-sm font-medium text-gray-900 bg-white shadow-lg border border-gray-100 rounded-xl',
+          duration: 4000,
+        }} />
+        {/* Background decoration - subtle or removed for cleaner look */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Minimalist background, maybe just pure white or very subtle gradient */}
       </div>
@@ -88,5 +102,6 @@ export default function App() {
         </Routes>
       </main>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -182,15 +182,15 @@ function ActiveArea({
             <button
               key={user.id}
               onClick={() => setFocusedUserId(focusedUserId === user.id ? null : user.id)}
-              className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all border whitespace-nowrap ${
+              className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all border whitespace-nowrap max-w-[160px] ${
                 focusedUserId === user.id 
                   ? 'bg-blue-50 border-blue-200 text-blue-700 ring-2 ring-blue-100' 
                   : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
               }`}
               title={user.name}
             >
-              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
-              <span className="text-sm font-medium">{user.name.split(' ')[0]}</span>
+              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+              <span className="text-sm font-medium truncate">{user.name}</span>
             </button>
           ))}
         </div>
