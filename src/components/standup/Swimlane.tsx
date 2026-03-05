@@ -72,7 +72,7 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
         isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
       )}
     >
-      <div className="flex justify-between items-center px-2 pl-3">
+      <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
@@ -95,16 +95,16 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
             <span>{issue.type || 'Task'}</span>
           </div>
 
-          <span className="text-sm font-bold text-gray-900 tracking-tight">
+          <span className="text-xs font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
-          <span className="text-gray-600 font-medium text-sm" title={issue.summary}>{issue.summary}</span>
+          <span className="text-gray-600 font-medium text-sm truncate min-w-0 flex-1" title={issue.summary}>{issue.summary}</span>
           
           {!isCompleted && (
             <button 
               onClick={() => updateIssueStatus(issue.id, isPending ? 'in-progress' : 'pending')}
               className={cn(
-                "ml-2 p-1 rounded-full hover:bg-white/50 transition-colors",
+                "p-1 rounded-full hover:bg-white/50 transition-colors",
                 isPending ? "text-amber-600 bg-amber-100/50" : "text-gray-400 hover:text-gray-600"
               )}
               title={isPending ? "Resume" : "Mark as Pending"}
@@ -118,12 +118,12 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           isCompleted ? "text-emerald-600" : isPending ? "text-amber-600" : "text-gray-900"
         )}>
           {isCompleted && <CheckCircle2 className="w-5 h-5" />}
-          {isPending && <span className="text-xs font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full mr-1">Pending</span>}
+          {isPending && <span className="text-xs font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Pending</span>}
           {displayProgress}%
         </span>
       </div>
       
-      <div className="flex gap-1 relative mt-5 mb-1 h-8 ml-3">
+      <div className="flex gap-1 relative mt-5 mb-1 h-8">
         {/* Background track line */}
         <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0" />
         <div 

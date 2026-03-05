@@ -165,12 +165,12 @@ function ActiveArea({
       className={`flex-1 overflow-y-auto bg-white transition-colors relative ${isOver ? 'bg-gray-50' : ''}`}
     >
       {/* Sticky Member Filter Header */}
-      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 mb-4 flex items-center gap-4">
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-2 mb-4 flex items-center gap-4">
         <span className="text-sm font-medium text-gray-500">Focus:</span>
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mb-1">
           <button
             onClick={() => setFocusedUserId(null)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
               focusedUserId === null 
                 ? 'bg-gray-900 text-white shadow-sm' 
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -189,8 +189,8 @@ function ActiveArea({
               }`}
               title={user.name}
             >
-              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
-              <span className="text-sm font-medium truncate">{user.name}</span>
+              <img src={user.avatar} alt={user.name} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
+              <span className="text-xs font-medium truncate">{user.name}</span>
             </button>
           ))}
         </div>
