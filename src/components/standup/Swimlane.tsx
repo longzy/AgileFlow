@@ -73,7 +73,7 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
       )}
     >
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
           <div {...attributes} {...listeners} className={cn("text-gray-300", isOverlay ? "cursor-grabbing" : "cursor-grab hover:text-gray-500")}>
             <GripVertical className="w-5 h-5" />
           </div>
@@ -98,8 +98,15 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           <span className="text-xs font-bold text-gray-900 tracking-tight">
             {issue.key}
           </span>
+          {/* truncate min-w-0 flex-1 */}
           <span className="text-gray-600 font-medium text-sm truncate min-w-0 flex-1" title={issue.summary}>{issue.summary}</span>
+        </div>
           
+        <span className={cn(
+          "text-lg font-bold text-right tabular-nums flex-shrink-0 flex items-center justify-end gap-2",
+          isCompleted ? "text-emerald-600" : isPending ? "text-amber-600" : "text-gray-900"
+        )}>
+          {isCompleted && <CheckCircle2 className="w-5 h-5" />}
           {!isCompleted && (
             <button 
               onClick={() => updateIssueStatus(issue.id, isPending ? 'in-progress' : 'pending')}
@@ -112,18 +119,12 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
               {isPending ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
             </button>
           )}
-        </div>
-        <span className={cn(
-          "text-lg font-bold w-24 text-right tabular-nums flex-shrink-0 flex items-center justify-end gap-2",
-          isCompleted ? "text-emerald-600" : isPending ? "text-amber-600" : "text-gray-900"
-        )}>
-          {isCompleted && <CheckCircle2 className="w-5 h-5" />}
           {isPending && <span className="text-xs font-medium px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Pending</span>}
           {displayProgress}%
         </span>
       </div>
       
-      <div className="flex gap-1 relative mt-5 mb-1 h-8">
+      <div className="flex gap-1 relative mt-3 h-8">
         {/* Background track line */}
         <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 -translate-y-1/2 rounded-full z-0" />
         <div 
@@ -185,7 +186,7 @@ const SwimlaneSlot: React.FC<{
       
       {/* Step marker (small dot) */}
       {step % 25 === 0 && (
-        <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400">
           {step}%
         </div>
       )}
