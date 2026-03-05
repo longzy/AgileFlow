@@ -5,11 +5,16 @@ import { cn } from '../../utils/cn';
 import { format, differenceInDays } from 'date-fns';
 
 export function Sidebar() {
-  const { sprint, currentUser } = useStore();
+  const { sprint, currentUser, issues } = useStore();
   const location = useLocation();
   
   const daysLeft = sprint ? differenceInDays(new Date(sprint.endDate), new Date()) : 0;
   const isPlanning = location.pathname === '/planning';
+
+  // Calculate total story points for the current sprint
+  const totalStoryPoints = issues.reduce((total, issue) => {
+    return total + (issue.storyPoints || 0);
+  }, 0);
 
   return (
     <aside className="w-64 flex-shrink-0 h-screen bg-[#F9F9F9] flex flex-col p-4 text-gray-600">
@@ -68,7 +73,12 @@ export function Sidebar() {
            </div>
            {sprint ? (
              <div>
-               <div className="text-sm font-bold text-gray-900 mb-1">{sprint.name}</div>
+               <div className="flex items-center justify-between mb-1">
+                 <div className="text-sm font-bold text-gray-900">{sprint.name}</div>
+                 <div className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full" title="Total Story Points">
+                   {totalStoryPoints} SP
+                 </div>
+               </div>
                {sprint.isActive ? (
                  <>
                    <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">

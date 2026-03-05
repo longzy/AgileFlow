@@ -12,6 +12,7 @@ export function StandupView() {
   const { issues, updateIssueStatus, updateIssueProgress, reorderIssues, isLoading } = useStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<any>(null);
+  const [focusedUserId, setFocusedUserId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -86,6 +87,11 @@ export function StandupView() {
   const activeIssue = issues.find(i => i.id === activeId);
   const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog');
 
+  // Get unique assignees from active issues
+  const assignees = Array.from(new Set(activeIssues.map(i => i.assignee?.id).filter(Boolean)))
+    .map(id => activeIssues.find(i => i.assignee?.id === id)?.assignee)
+    .filter((u): u is NonNullable<typeof u> => !!u);
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50/50">
@@ -107,7 +113,12 @@ export function StandupView() {
       >
         <BacklogSidebar issues={issues.filter(i => i.status === 'todo')} />
         
-        <ActiveArea issues={activeIssues} />
+        <ActiveArea 
+          issues={activeIssues} 
+          focusedUserId={focusedUserId} 
+          setFocusedUserId={setFocusedUserId}
+          assignees={assignees}
+        />
 
         <DragOverlay>
           {activeDragData?.type === 'issue' && activeIssue ? (
@@ -123,25 +134,84 @@ export function StandupView() {
   );
 }
 
-function ActiveArea({ issues }: { issues: Issue[] }) {
+function ActiveArea({ 
+  issues, 
+  focusedUserId, 
+  setFocusedUserId,
+  assignees 
+}: { 
+  issues: Issue[], 
+  focusedUserId: string | null,
+  setFocusedUserId: (id: string | null) => void,
+  assignees: any[]
+}) {
   const { setNodeRef, isOver } = useDroppable({
     id: 'active-area',
+  });
+
+  // Sort issues: focused user's issues first, then others
+  const sortedIssues = [...issues].sort((a, b) => {
+    if (!focusedUserId) return 0;
+    const aIsFocused = a.assignee?.id === focusedUserId;
+    const bIsFocused = b.assignee?.id === focusedUserId;
+    if (aIsFocused && !bIsFocused) return -1;
+    if (!aIsFocused && bIsFocused) return 1;
+    return 0;
   });
 
   return (
     <div 
       ref={setNodeRef}
-      className={`flex-1 p-8 overflow-y-auto bg-white transition-colors ${isOver ? 'bg-gray-50' : ''}`}
+      className={`flex-1 overflow-y-auto bg-white transition-colors relative ${isOver ? 'bg-gray-50' : ''}`}
     >
-      <div className="max-w-5xl mx-auto space-y-4 min-h-full pb-32">
+      {/* Sticky Member Filter Header */}
+      <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-gray-100 px-8 py-4 mb-4 flex items-center gap-4">
+        <span className="text-sm font-medium text-gray-500">Focus:</span>
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mb-1">
+          <button
+            onClick={() => setFocusedUserId(null)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+              focusedUserId === null 
+                ? 'bg-gray-900 text-white shadow-sm' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            All
+          </button>
+          {assignees.map(user => (
+            <button
+              key={user.id}
+              onClick={() => setFocusedUserId(focusedUserId === user.id ? null : user.id)}
+              className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-all border whitespace-nowrap ${
+                focusedUserId === user.id 
+                  ? 'bg-blue-50 border-blue-200 text-blue-700 ring-2 ring-blue-100' 
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+              }`}
+              title={user.name}
+            >
+              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+              <span className="text-sm font-medium">{user.name.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto space-y-4 min-h-full pb-32 px-8">
         {issues.length === 0 ? (
           <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
             Drag tasks here to start
           </div>
         ) : (
-          <SortableContext items={issues.map(i => `swimlane-${i.id}`)} strategy={verticalListSortingStrategy}>
-            {issues.map(issue => (
-              <Swimlane key={issue.id} issue={issue} />
+          <SortableContext items={sortedIssues.map(i => `swimlane-${i.id}`)} strategy={verticalListSortingStrategy}>
+            {sortedIssues.map(issue => (
+              <div 
+                key={issue.id} 
+                className={`transition-opacity duration-300 ${
+                  focusedUserId && issue.assignee?.id !== focusedUserId ? 'opacity-30 grayscale' : 'opacity-100'
+                }`}
+              >
+                <Swimlane issue={issue} />
+              </div>
             ))}
           </SortableContext>
         )}
