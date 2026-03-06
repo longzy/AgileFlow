@@ -353,9 +353,12 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
     (issuesData.issues || []).forEach((i: any) => {
       const user = i.fields.assignee;
       if (user && !rawUsersMap.has(user.key)) {
+        // Fix: Use accountId (Cloud) or name (Server) as ID, fallback to key
+        // This ensures assignIssue receives the correct identifier
+        const userId = user.accountId || user.name || user.key;
         rawUsersMap.set(user.key, {
-          id: user.key,
-          name: user.name,
+          id: userId,
+          name: user.displayName || user.name,
           avatarUrl: user.avatarUrls?.['48x48']
         });
       }
@@ -363,7 +366,7 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
 
     // Fetch avatars and build resolved users
     const resolvedUsersMap = new Map();
-    await Promise.all(Array.from(rawUsersMap.values()).map(async (user) => {
+    await Promise.all(Array.from(rawUsersMap.entries()).map(async ([jiraKey, user]: [string, any]) => {
       let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
       if (user.avatarUrl) {
         const base64 = await fetchAvatarAsBase64(user.avatarUrl);
@@ -371,7 +374,8 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
           avatar = base64;
         }
       }
-      resolvedUsersMap.set(user.id, {
+      // Map key is jiraKey (for lookup), but user object contains the correct ID for assignment
+      resolvedUsersMap.set(jiraKey, {
         id: user.id,
         name: user.name,
         avatar
