@@ -19,12 +19,10 @@ router.get("/board/:boardId/users", async (req, res) => {
 // Assign Issue
 router.post("/issue/:issueId/assignee", async (req, res) => {
   const { issueId } = req.params;
-  // Support both 'userId' (legacy) and 'name' (Jira Server) parameters
-  const { userId, name } = req.body;
-  const targetUser = name || userId;
+  const { userId } = req.body;
 
   try {
-    await assignIssue(issueId, targetUser);
+    await assignIssue(issueId, userId);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to assign issue" });
