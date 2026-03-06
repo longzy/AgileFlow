@@ -13,6 +13,24 @@ const getJiraHeaders = () => {
   };
 };
 
+// Helper to fetch avatar as base64
+const fetchAvatarAsBase64 = async (url: string) => {
+  try {
+    const res = await fetch(url, {
+      headers: getJiraHeaders(),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const contentType = res.headers.get('content-type') || 'image/png';
+    return `data:${contentType};base64,${buffer.toString('base64')}`;
+  } catch (e) {
+    console.error("Failed to fetch avatar:", e);
+    return null;
+  }
+};
+
 export const updateIssueStatus = async (issueId: string, targetStatusCategory: string) => {
   if (!config.JIRA.BASE_URL) {
     console.log(`[Mock] Updating issue ${issueId} status category to ${targetStatusCategory}`);
@@ -228,11 +246,25 @@ export const getGroupMembers = async (groupName: string) => {
     const data = await response.json();
     const members = data.values || [];
 
-    return members.map((u: any) => ({
-      id: u.accountId || u.key || u.name,
-      name: u.displayName || u.name,
-      avatar: u.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.displayName || u.name}`
+    const resolvedMembers = await Promise.all(members.map(async (u: any) => {
+      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.displayName || u.name)}`;
+      const avatarUrl = u.avatarUrls?.['48x48'];
+      
+      if (avatarUrl) {
+        const base64 = await fetchAvatarAsBase64(avatarUrl);
+        if (base64) {
+          avatar = base64;
+        }
+      }
+
+      return {
+        id: u.accountId || u.key || u.name,
+        name: u.displayName || u.name,
+        avatar
+      };
     }));
+
+    return resolvedMembers;
 
   } catch (error) {
     console.error("Jira Get Group Members Error:", error);
@@ -317,23 +349,6 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
     });
 
     // Fetch avatars and build resolved users
-    const fetchAvatarAsBase64 = async (url: string) => {
-      try {
-        const res = await fetch(url, {
-          headers: getJiraHeaders(),
-          signal: AbortSignal.timeout(5000)
-        });
-        if (!res.ok) return null;
-        const arrayBuffer = await res.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const contentType = res.headers.get('content-type') || 'image/png';
-        return `data:${contentType};base64,${buffer.toString('base64')}`;
-      } catch (e) {
-        console.error("Failed to fetch avatar:", e);
-        return null;
-      }
-    };
-
     const resolvedUsersMap = new Map();
     await Promise.all(Array.from(rawUsersMap.values()).map(async (user) => {
       let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
