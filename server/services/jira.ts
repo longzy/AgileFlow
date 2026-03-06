@@ -371,7 +371,23 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
       // Fix: Use accountId (Cloud) or name (Server) as ID, fallback to key.
       // User feedback confirms 'name' field contains the correct login username (e.g. "huixin.a")
       // while 'key' might be an internal ID (e.g. "JIRAUSER10107").
-      const userId = user.name || user.accountId || user.key;
+      let userId = user.name || user.accountId || user.key;
+
+      // Fallback: If userId looks like an internal key (starts with JIRAUSER), 
+      // try to extract the real username from the 'self' URL.
+      // Example self: "http://.../rest/api/2/user?username=huixin.a"
+      if (typeof userId === 'string' && userId.startsWith('JIRAUSER') && user.self) {
+        try {
+          const selfUrl = new URL(user.self);
+          const usernameParam = selfUrl.searchParams.get('username');
+          if (usernameParam) {
+            console.log(`[Jira] Extracted username '${usernameParam}' from self URL for key '${user.key}'`);
+            userId = usernameParam;
+          }
+        } catch (e) {
+          // Ignore URL parsing errors
+        }
+      }
       
       // Log for debugging purposes to verify we are selecting the correct ID
       if (userId !== user.key) {
