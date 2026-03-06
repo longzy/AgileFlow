@@ -187,13 +187,12 @@ export const assignIssue = async (issueId: string, userId: string) => {
   }
 
   try {
-    // For Jira Cloud, use accountId. For Server, use name.
-    // We'll try accountId first as it's the standard for Cloud.
+    // Directly use 'name' strategy as requested for Jira Server compatibility
     const updateBody = {
-      accountId: userId
+      name: userId
     };
 
-    console.log(`[Jira] Assigning issue ${issueId} to ${userId} (accountId strategy)`);
+    console.log(`[Jira] Assigning issue ${issueId} to ${userId} (name strategy)`);
     const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/assignee`, {
       method: 'PUT',
       headers: getJiraHeaders(),
@@ -205,28 +204,6 @@ export const assignIssue = async (issueId: string, userId: string) => {
     }
 
     const errorText = await response.text();
-    console.warn(`[Jira] Assign by accountId failed: ${response.status} ${response.statusText}`, errorText);
-
-    // Only fallback if 400 (Bad Request) - likely due to invalid field (e.g. accountId not supported)
-    if (response.status === 400) {
-      console.log(`[Jira] Retrying assignment for ${issueId} to ${userId} (name strategy)`);
-      const updateBodyName = {
-        name: userId
-      };
-      const responseName = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/assignee`, {
-        method: 'PUT',
-        headers: getJiraHeaders(),
-        body: JSON.stringify(updateBodyName)
-      });
-
-      if (!responseName.ok) {
-         const errorTextName = await responseName.text();
-         throw new Error(`Failed to assign issue (name strategy): ${responseName.status} ${responseName.statusText} - ${errorTextName}`);
-      }
-      
-      return { success: true };
-    }
-
     throw new Error(`Failed to assign issue: ${response.status} ${response.statusText} - ${errorText}`);
   } catch (error) {
     console.error("Jira Assign Issue Error:", error);
