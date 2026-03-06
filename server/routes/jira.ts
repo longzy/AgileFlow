@@ -1,17 +1,18 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getProjectUsers, assignIssue } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
 
-// Get Project Users
+// Get Project Users (Now fetches from '软件部门' group)
 router.get("/board/:boardId/users", async (req, res) => {
-  const { boardId } = req.params;
+  // const { boardId } = req.params; // We ignore boardId as per requirement
   try {
-    const users = await getProjectUsers(boardId);
+    // Hardcoded group name as requested: '软件部门'
+    const users = await getGroupMembers('软件部门');
     res.json(users);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch project users" });
+    res.status(500).json({ error: "Failed to fetch group members" });
   }
 });
 

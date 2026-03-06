@@ -18,7 +18,12 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
   const { users, assignUser, fetchProjectUsers, selectedBoard } = useStore();
   const assignee = issue.assignee;
   const [isAssigneeOpen, setIsAssigneeOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    originClass: string;
+  }>({ top: 0, left: 0, originClass: 'origin-top-right' });
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button container
   const portalRef = useRef<HTMLDivElement>(null);   // Ref for the portal content
@@ -73,13 +78,28 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
 
     if (!isAssigneeOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect();
-      // Calculate position: align right edge of dropdown with right edge of button
-      // Dropdown width is w-48 (12rem = 192px)
-      // If space below is limited, show above? For now, just show below.
-      setDropdownPosition({
-        top: rect.bottom + 8,
-        left: rect.right - 192 + (rect.width > 24 ? 0 : 12) // Adjust if button is small
-      });
+      const dropdownMaxHeight = 300; // Approximate max height (search + list + padding)
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      let position: any = {
+        left: rect.right - 192 + (rect.width > 24 ? 0 : 12), // Adjust if button is small
+        originClass: "origin-top-right"
+      };
+
+      // If not enough space below, show above
+      if (spaceBelow < dropdownMaxHeight) {
+        // Position using bottom relative to viewport
+        // This ensures the dropdown grows upwards from the button
+        position.bottom = window.innerHeight - rect.top + 8;
+        position.originClass = "origin-bottom-right";
+        
+        // If also not enough space above, we might need to clamp height, 
+        // but for now let's assume 300px fits somewhere.
+      } else {
+        position.top = rect.bottom + 8;
+      }
+
+      setDropdownPosition(position);
     }
     setIsAssigneeOpen(!isAssigneeOpen);
   };
@@ -223,9 +243,13 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
       {isAssigneeOpen && createPortal(
         <div 
           ref={portalRef}
-          className="fixed z-[9999] w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right"
+          className={cn(
+            "fixed z-[9999] w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100",
+            dropdownPosition.originClass
+          )}
           style={{ 
             top: dropdownPosition.top, 
+            bottom: dropdownPosition.bottom,
             left: dropdownPosition.left,
           }}
           onPointerDown={(e) => e.stopPropagation()}

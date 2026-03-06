@@ -204,58 +204,38 @@ export const assignIssue = async (issueId: string, userId: string) => {
   }
 };
 
-export const getProjectUsers = async (boardId: string) => {
+export const getGroupMembers = async (groupName: string) => {
   if (!config.JIRA.BASE_URL) {
-    // Return mock users
+    // Return mock users for group
     return [
-      { id: 'user-1', name: 'Alice', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice' },
-      { id: 'user-2', name: 'Bob', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob' },
-      { id: 'user-3', name: 'Charlie', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie' },
+      { id: 'sw-1', name: 'Software Engineer 1', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SE1' },
+      { id: 'sw-2', name: 'Software Engineer 2', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SE2' },
+      { id: 'sw-3', name: 'Tech Lead', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TL' },
+      { id: 'sw-4', name: 'QA Engineer', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=QA' },
     ];
   }
 
   try {
-    // 1. Get projects for the board
-    const projectRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/project`, {
+    const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/group/member?groupname=${encodeURIComponent(groupName)}`, {
       headers: getJiraHeaders(),
       signal: AbortSignal.timeout(5000)
     });
 
-    if (!projectRes.ok) {
-      throw new Error(`Failed to fetch projects for board: ${projectRes.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch group members: ${response.statusText}`);
     }
 
-    const projectData = await projectRes.json();
-    const projects = projectData.values || [];
-    
-    if (projects.length === 0) {
-      return [];
-    }
+    const data = await response.json();
+    const members = data.values || [];
 
-    // 2. Get assignable users for the first project (usually sufficient for board context)
-    // We use the first project key found.
-    const projectKey = projects[0].key;
-    
-    const usersRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/user/assignable/search?project=${projectKey}`, {
-      headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(5000)
-    });
-
-    if (!usersRes.ok) {
-      throw new Error(`Failed to fetch users: ${usersRes.statusText}`);
-    }
-
-    const usersData = await usersRes.json();
-    
-    // Map to our User format
-    return usersData.map((u: any) => ({
-      id: u.accountId || u.key || u.name, // Prefer accountId for Cloud
+    return members.map((u: any) => ({
+      id: u.accountId || u.key || u.name,
       name: u.displayName || u.name,
       avatar: u.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.displayName || u.name}`
     }));
 
   } catch (error) {
-    console.error("Jira Get Users Error:", error);
+    console.error("Jira Get Group Members Error:", error);
     return [];
   }
 };
