@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Issue, Sprint, User, IssueStatus, Vote, Board } from '../types';
 import { arrayMove } from '@dnd-kit/sortable';
 import { socketService } from '../services/socketService';
+import { toast } from 'react-hot-toast';
 
 interface AppState {
   users: User[];
@@ -28,6 +29,7 @@ interface AppState {
   updateIssueStatus: (id: string, status: IssueStatus) => void;
   updateIssuePoints: (id: string, points: number) => void;
   updateIssueProgress: (id: string, progress: number) => void;
+  assignUser: (issueId: string, userId: string) => void;
   reorderIssues: (activeId: string, overId: string) => void;
   login: (username: string) => void;
   logout: () => void;
@@ -36,6 +38,7 @@ interface AppState {
   selectBoard: (board: Board) => void;
   clearSelectedBoard: () => void;
   fetchBoardData: (sprintState?: 'active' | 'future') => Promise<void>;
+  fetchProjectUsers: (boardId: string) => Promise<void>;
   
   // Socket actions
   joinRoom: (roomId: string) => void;
@@ -126,7 +129,8 @@ export const useStore = create<AppState>()(
         const newUser = {
           id: `user-${Date.now()}`,
           name: username,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+          isHost: false
         };
         
         set((state) => ({
@@ -156,6 +160,7 @@ export const useStore = create<AppState>()(
           set({ boards: data.boards, isLoading: false });
         } catch (error) {
           console.error(error);
+          toast.error('Failed to load boards');
           set({ error: 'Failed to load boards', isLoading: false });
         }
       },
@@ -200,7 +205,10 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
-          }).catch(err => console.error('Failed to update status', err));
+          }).catch(err => {
+            console.error('Failed to update status', err);
+            toast.error('Failed to update status');
+          });
 
           // Update pending custom field
           const isPending = status === 'pending';
@@ -208,7 +216,10 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isPending })
-          }).catch(err => console.error('Failed to update pending status', err));
+          }).catch(err => {
+            console.error('Failed to update pending status', err);
+            toast.error('Failed to update pending status');
+          });
         }
 
         return { issues: updatedIssues };
@@ -231,7 +242,10 @@ export const useStore = create<AppState>()(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ points })
-        }).catch(err => console.error('Failed to update points', err));
+        }).catch(err => {
+          console.error('Failed to update points', err);
+          toast.error('Failed to update points');
+        });
 
         // Reset voting state immediately to prevent UI flicker
         // We don't broadcast reset here because we are about to switch rooms
@@ -296,7 +310,10 @@ export const useStore = create<AppState>()(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ progress })
-        }).catch(err => console.error('Failed to update progress', err));
+        }).catch(err => {
+          console.error('Failed to update progress', err);
+          toast.error('Failed to update progress');
+        });
 
         if (issue.status !== newStatus) {
           let statusCategory = 'new';
@@ -307,7 +324,10 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
-          }).catch(err => console.error('Failed to update status', err));
+          }).catch(err => {
+            console.error('Failed to update status', err);
+            toast.error('Failed to update status');
+          });
 
           // If it was pending and now it's in-progress or done, clear the pending flag
           if (issue.status === 'pending') {
@@ -315,11 +335,39 @@ export const useStore = create<AppState>()(
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ isPending: false })
-            }).catch(err => console.error('Failed to update pending status', err));
+            }).catch(err => {
+              console.error('Failed to update pending status', err);
+              toast.error('Failed to update pending status');
+            });
           }
         }
 
         return { issues: newIssues };
+      }),
+
+      assignUser: (issueId, userId) => set((state) => {
+        const user = state.users.find(u => u.id === userId);
+        if (!user) return state;
+
+        const updatedIssues = state.issues.map(i => i.id === issueId ? { ...i, assignee: user } : i);
+        
+        // Broadcast update
+        const updatedIssue = updatedIssues.find(i => i.id === issueId);
+        if (updatedIssue && state.selectedBoard) {
+          socketService.updateIssue(state.selectedBoard.id, updatedIssue);
+        }
+
+        // Call API in background
+        fetch(`/api/jira/issue/${issueId}/assignee`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        }).catch(err => {
+          console.error('Failed to update assignee', err);
+          toast.error('Failed to update assignee');
+        });
+
+        return { issues: updatedIssues };
       }),
 
       reorderIssues: (activeId, overId) => set((state) => {
@@ -339,22 +387,43 @@ export const useStore = create<AppState>()(
 
         set({ isLoading: true, error: null });
         try {
-          const res = await fetch(`/api/jira/board-data?boardId=${selectedBoard.id}&state=${sprintState}`);
-          if (!res.ok) throw new Error('Failed to fetch board data');
-          const data = await res.json();
+          // Fetch board data and users in parallel
+          const [boardRes, usersRes] = await Promise.all([
+            fetch(`/api/jira/board-data?boardId=${selectedBoard.id}&state=${sprintState}`),
+            fetch(`/api/jira/board/${selectedBoard.id}/users`)
+          ]);
+
+          if (!boardRes.ok) throw new Error('Failed to fetch board data');
           
-          // We don't overwrite users with API data anymore, as users are managed by socket
-          // But we might want to keep track of assignees for other purposes if needed
+          const data = await boardRes.json();
+          
+          let projectUsers: User[] = [];
+          if (usersRes.ok) {
+            projectUsers = await usersRes.json();
+          }
           
           set({
-            // users: fetchedUsers, // Managed by socket
+            users: projectUsers.length > 0 ? projectUsers : get().users,
             sprint: data.sprint,
             issues: data.issues,
             isLoading: false
           });
         } catch (error) {
           console.error(error);
+          toast.error('Failed to load data');
           set({ error: 'Failed to load data', isLoading: false });
+        }
+      },
+
+      fetchProjectUsers: async (boardId) => {
+        try {
+          const res = await fetch(`/api/jira/board/${boardId}/users`);
+          if (!res.ok) throw new Error('Failed to fetch users');
+          const users = await res.json();
+          set({ users });
+        } catch (error) {
+          console.error(error);
+          // Don't show toast here to avoid spamming if it fails silently
         }
       },
 

@@ -162,6 +162,104 @@ export const updateIssuePoints = async (issueId: string, points: number) => {
   }
 };
 
+export const assignIssue = async (issueId: string, userId: string) => {
+  if (!config.JIRA.BASE_URL) {
+    console.log(`[Mock] Assigning issue ${issueId} to user ${userId}`);
+    return { success: true };
+  }
+
+  try {
+    // For Jira Cloud, use accountId. For Server, use name.
+    // We'll try accountId first as it's the standard for Cloud.
+    const updateBody = {
+      accountId: userId
+    };
+
+    const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/assignee`, {
+      method: 'PUT',
+      headers: getJiraHeaders(),
+      body: JSON.stringify(updateBody)
+    });
+
+    if (!response.ok) {
+      // Fallback for Server/older APIs that might expect 'name'
+      const updateBodyName = {
+        name: userId
+      };
+      const responseName = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/assignee`, {
+        method: 'PUT',
+        headers: getJiraHeaders(),
+        body: JSON.stringify(updateBodyName)
+      });
+
+      if (!responseName.ok) {
+         throw new Error(`Failed to assign issue: ${response.statusText} / ${responseName.statusText}`);
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Jira Assign Issue Error:", error);
+    throw error;
+  }
+};
+
+export const getProjectUsers = async (boardId: string) => {
+  if (!config.JIRA.BASE_URL) {
+    // Return mock users
+    return [
+      { id: 'user-1', name: 'Alice', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice' },
+      { id: 'user-2', name: 'Bob', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob' },
+      { id: 'user-3', name: 'Charlie', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Charlie' },
+    ];
+  }
+
+  try {
+    // 1. Get projects for the board
+    const projectRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/project`, {
+      headers: getJiraHeaders(),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!projectRes.ok) {
+      throw new Error(`Failed to fetch projects for board: ${projectRes.statusText}`);
+    }
+
+    const projectData = await projectRes.json();
+    const projects = projectData.values || [];
+    
+    if (projects.length === 0) {
+      return [];
+    }
+
+    // 2. Get assignable users for the first project (usually sufficient for board context)
+    // We use the first project key found.
+    const projectKey = projects[0].key;
+    
+    const usersRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/user/assignable/search?project=${projectKey}`, {
+      headers: getJiraHeaders(),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!usersRes.ok) {
+      throw new Error(`Failed to fetch users: ${usersRes.statusText}`);
+    }
+
+    const usersData = await usersRes.json();
+    
+    // Map to our User format
+    return usersData.map((u: any) => ({
+      id: u.accountId || u.key || u.name, // Prefer accountId for Cloud
+      name: u.displayName || u.name,
+      avatar: u.avatarUrls?.['48x48'] || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.displayName || u.name}`
+    }));
+
+  } catch (error) {
+    console.error("Jira Get Users Error:", error);
+    return [];
+  }
+};
+
 export const getBoards = async () => {
   if (!config.JIRA.BASE_URL) {
     return getMockBoards();

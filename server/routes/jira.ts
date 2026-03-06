@@ -1,8 +1,32 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getProjectUsers, assignIssue } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
+
+// Get Project Users
+router.get("/board/:boardId/users", async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const users = await getProjectUsers(boardId);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch project users" });
+  }
+});
+
+// Assign Issue
+router.post("/issue/:issueId/assignee", async (req, res) => {
+  const { issueId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    await assignIssue(issueId, userId);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to assign issue" });
+  }
+});
 
 // Update Issue Pending Status
 router.post("/issue/:issueId/pending", async (req, res) => {

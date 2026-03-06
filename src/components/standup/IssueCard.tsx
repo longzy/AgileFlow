@@ -1,9 +1,12 @@
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 // Force UI sync
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
-import { PauseCircle, CheckCircle2, BookOpen, CheckSquare, Bug } from 'lucide-react';
+import { PauseCircle, CheckCircle2, BookOpen, CheckSquare, Bug, User as UserIcon } from 'lucide-react';
+import { useStore } from '../../store/useStore';
 
 interface IssueCardProps {
   key?: string | number;
@@ -12,7 +15,59 @@ interface IssueCardProps {
 }
 
 export function IssueCard({ issue, isOverlay }: IssueCardProps) {
+  const { users, assignUser, fetchProjectUsers, selectedBoard } = useStore();
   const assignee = issue.assignee;
+  const [isAssigneeOpen, setIsAssigneeOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null); // Ref for the button container
+  const portalRef = useRef<HTMLDivElement>(null);   // Ref for the portal content
+
+  useEffect(() => {
+    if (isAssigneeOpen && selectedBoard) {
+      fetchProjectUsers(selectedBoard.id);
+    }
+  }, [isAssigneeOpen, selectedBoard, fetchProjectUsers]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Check if click is outside both the button (dropdownRef) and the dropdown menu (portalRef)
+      const target = event.target as Node;
+      const isOutsideButton = dropdownRef.current && !dropdownRef.current.contains(target);
+      const isOutsidePortal = portalRef.current && !portalRef.current.contains(target);
+
+      if (isOutsideButton && isOutsidePortal) {
+        setIsAssigneeOpen(false);
+      }
+    }
+    
+    if (isAssigneeOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      // Also close on scroll to avoid detached dropdowns
+      window.addEventListener("scroll", () => setIsAssigneeOpen(false), { capture: true });
+    }
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", () => setIsAssigneeOpen(false), { capture: true });
+    };
+  }, [isAssigneeOpen]);
+
+  const toggleDropdown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isOverlay) return;
+
+    if (!isAssigneeOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      // Calculate position: align right edge of dropdown with right edge of button
+      // Dropdown width is w-48 (12rem = 192px)
+      // If space below is limited, show above? For now, just show below.
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.right - 192 + (rect.width > 24 ? 0 : 12) // Adjust if button is small
+      });
+    }
+    setIsAssigneeOpen(!isAssigneeOpen);
+  };
 
   const {
     attributes,
@@ -23,7 +78,8 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
     isDragging,
   } = useSortable({ 
     id: issue.id,
-    data: { type: 'issue', issue }
+    data: { type: 'issue', issue },
+    disabled: isAssigneeOpen // Disable drag when dropdown is open
   });
 
   const style = {
@@ -51,94 +107,141 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
   const isPending = issue.status === 'pending';
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        "rounded-2xl p-4 transition-all group relative border overflow-hidden",
-        isCompleted 
-          ? "bg-emerald-50/50 border-emerald-200 shadow-sm ring-1 ring-emerald-100/50" 
-          : isPending
-            ? "bg-amber-50/50 border-amber-200 shadow-sm ring-1 ring-amber-100/50 opacity-80"
-            : "bg-white border-transparent shadow-sm",
-        isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
-        isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
-      )}
-    >
-      <div className="flex items-start justify-between mb-2 pl-1">
-        <div className="flex items-center gap-2">
-          <div className={cn(
-            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
-            getTypeColor(issue.type)
-          )}>
-            {getTypeIcon(issue.type)}
-            <span>{issue.type || 'Task'}</span>
-          </div>
-          <span className="text-xs font-bold text-gray-900 tracking-tight">
-            {issue.key}
-          </span>
-          {isPending && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">
-              Pending
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {issue.estimated && (
-            <div className="flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full text-[10px] font-bold">
-              <CheckCircle2 className="w-3 h-3" />
-              <span>{issue.storyPoints}</span>
-            </div>
-          )}
-          {assignee ? (
-            <img 
-              src={assignee.avatar} 
-              alt={assignee.name} 
-              className="w-6 h-6 min-w-[24px] min-h-[24px] object-cover rounded-full border border-white shadow-sm"
-              title={assignee.name}
-            />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-              <span className="text-[10px] text-gray-400">?</span>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      <h3 className="text-sm font-medium text-gray-900 mb-3 pl-1 line-clamp-2 leading-relaxed group-hover:text-gray-700 transition-colors">
-        {issue.summary}
-      </h3>
-
-      <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50 pl-1">
-        {issue.priority ? (
-          <div className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
-            issue.priority === 'High' ? "bg-red-50 text-red-600" :
-            issue.priority === 'Medium' ? "bg-amber-50 text-amber-600" :
-            "bg-blue-50 text-blue-600"
-          )}>
-            <span className={cn(
-              "w-1.5 h-1.5 rounded-full",
-              issue.priority === 'High' ? "bg-red-500" :
-              issue.priority === 'Medium' ? "bg-amber-500" :
-              "bg-blue-500"
-            )} />
-            {issue.priority}
-          </div>
-        ) : <div />}
-        
-        {(issue.status === 'in-progress' || isPending) && (
-          <div className={cn(
-            "text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
-            isCompleted ? "bg-emerald-100 text-emerald-700" : isPending ? "bg-amber-100 text-amber-700" : "text-gray-900 bg-gray-100"
-          )}>
-            {isCompleted && <CheckCircle2 className="w-3 h-3" />}
-            {issue.progress}%
-          </div>
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={cn(
+          "rounded-2xl p-4 transition-all group relative border", // Removed overflow-hidden
+          isCompleted 
+            ? "bg-emerald-50/50 border-emerald-200 shadow-sm ring-1 ring-emerald-100/50" 
+            : isPending
+              ? "bg-amber-50/50 border-amber-200 shadow-sm ring-1 ring-amber-100/50 opacity-80"
+              : "bg-white border-transparent shadow-sm",
+          isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
+          isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
         )}
+      >
+        <div className="flex items-start justify-between mb-2 pl-1">
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
+              getTypeColor(issue.type)
+            )}>
+              {getTypeIcon(issue.type)}
+              <span>{issue.type || 'Task'}</span>
+            </div>
+            <span className="text-xs font-bold text-gray-900 tracking-tight">
+              {issue.key}
+            </span>
+            {isPending && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded-full">
+                Pending
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {issue.estimated && (
+              <div className="flex items-center gap-1 text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{issue.storyPoints}</span>
+              </div>
+            )}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={toggleDropdown}
+                className="flex items-center justify-center rounded-full transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500"
+              >
+                {assignee ? (
+                  <img 
+                    src={assignee.avatar} 
+                    alt={assignee.name} 
+                    className="w-6 h-6 min-w-[24px] min-h-[24px] object-cover rounded-full border border-white shadow-sm"
+                    title={assignee.name}
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center border border-dashed border-gray-300 hover:border-gray-400 hover:bg-gray-200 transition-colors">
+                    <UserIcon className="w-3 h-3 text-gray-400" />
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <h3 className="text-sm font-medium text-gray-900 mb-3 pl-1 line-clamp-2 leading-relaxed group-hover:text-gray-700 transition-colors">
+          {issue.summary}
+        </h3>
+
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50 pl-1">
+          {issue.priority ? (
+            <div className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+              issue.priority === 'High' ? "bg-red-50 text-red-600" :
+              issue.priority === 'Medium' ? "bg-amber-50 text-amber-600" :
+              "bg-blue-50 text-blue-600"
+            )}>
+              <span className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                issue.priority === 'High' ? "bg-red-500" :
+                issue.priority === 'Medium' ? "bg-amber-500" :
+                "bg-blue-500"
+              )} />
+              {issue.priority}
+            </div>
+          ) : <div />}
+          
+          {(issue.status === 'in-progress' || isPending) && (
+            <div className={cn(
+              "text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
+              isCompleted ? "bg-emerald-100 text-emerald-700" : isPending ? "bg-amber-100 text-amber-700" : "text-gray-900 bg-gray-100"
+            )}>
+              {isCompleted && <CheckCircle2 className="w-3 h-3" />}
+              {issue.progress}%
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {isAssigneeOpen && createPortal(
+        <div 
+          ref={portalRef}
+          className="fixed z-[9999] w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right"
+          style={{ 
+            top: dropdownPosition.top, 
+            left: dropdownPosition.left,
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="p-2 max-h-60 overflow-y-auto">
+            <div className="text-xs font-semibold text-gray-400 px-2 py-1 mb-1 uppercase tracking-wider">Assign to</div>
+            {users.map(user => (
+              <button
+                key={user.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  assignUser(issue.id, user.id);
+                  setIsAssigneeOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors",
+                  assignee?.id === user.id ? "bg-blue-50 text-blue-700" : "hover:bg-gray-50 text-gray-700"
+                )}
+              >
+                <img src={user.avatar} alt={user.name} className="w-5 h-5 rounded-full object-cover" />
+                <span className="truncate">{user.name}</span>
+                {assignee?.id === user.id && <CheckCircle2 className="w-3 h-3 ml-auto text-blue-500" />}
+              </button>
+            ))}
+            {users.length === 0 && (
+              <div className="text-xs text-gray-400 px-2 py-2 text-center">No users found</div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

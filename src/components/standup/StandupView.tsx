@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 // Force UI sync
 import { useStore } from '../../store/useStore';
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragEndEvent, useDroppable } from '@dnd-kit/core';
@@ -72,6 +73,10 @@ export function StandupView() {
     const activeIssue = issues.find(i => i.id === activeIdStr);
     if (activeIssue?.status === 'todo') {
       if (overIdStr === 'active-area' || overIdStr.startsWith('slot-') || overType === 'swimlane') {
+        if (!activeIssue.assignee) {
+          toast.error('Please assign a user before moving to active area');
+          return;
+        }
         updateIssueProgress(activeIdStr, 0);
       }
       return;
