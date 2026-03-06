@@ -193,14 +193,23 @@ export const assignIssue = async (issueId: string, userId: string) => {
       accountId: userId
     };
 
+    console.log(`[Jira] Assigning issue ${issueId} to ${userId} (accountId strategy)`);
     const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/issue/${issueId}/assignee`, {
       method: 'PUT',
       headers: getJiraHeaders(),
       body: JSON.stringify(updateBody)
     });
 
-    if (!response.ok) {
-      // Fallback for Server/older APIs that might expect 'name'
+    if (response.ok) {
+      return { success: true };
+    }
+
+    const errorText = await response.text();
+    console.warn(`[Jira] Assign by accountId failed: ${response.status} ${response.statusText}`, errorText);
+
+    // Only fallback if 400 (Bad Request) - likely due to invalid field (e.g. accountId not supported)
+    if (response.status === 400) {
+      console.log(`[Jira] Retrying assignment for ${issueId} to ${userId} (name strategy)`);
       const updateBodyName = {
         name: userId
       };
@@ -211,11 +220,14 @@ export const assignIssue = async (issueId: string, userId: string) => {
       });
 
       if (!responseName.ok) {
-         throw new Error(`Failed to assign issue: ${response.statusText} / ${responseName.statusText}`);
+         const errorTextName = await responseName.text();
+         throw new Error(`Failed to assign issue (name strategy): ${responseName.status} ${responseName.statusText} - ${errorTextName}`);
       }
+      
+      return { success: true };
     }
 
-    return { success: true };
+    throw new Error(`Failed to assign issue: ${response.status} ${response.statusText} - ${errorText}`);
   } catch (error) {
     console.error("Jira Assign Issue Error:", error);
     throw error;
@@ -258,7 +270,8 @@ export const getGroupMembers = async (groupName: string) => {
       }
 
       return {
-        id: u.accountId || u.key || u.name,
+        // Prefer accountId (Cloud), then name (Server), then key
+        id: u.accountId || u.name || u.key,
         name: u.displayName || u.name,
         avatar
       };

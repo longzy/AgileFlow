@@ -208,7 +208,9 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
-          }).catch(err => {
+          })
+          .then(res => { if (!res.ok) throw new Error('Failed to update status'); })
+          .catch(err => {
             console.error('Failed to update status', err);
             toast.error('Failed to update status');
           });
@@ -219,7 +221,9 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isPending })
-          }).catch(err => {
+          })
+          .then(res => { if (!res.ok) throw new Error('Failed to update pending status'); })
+          .catch(err => {
             console.error('Failed to update pending status', err);
             toast.error('Failed to update pending status');
           });
@@ -245,7 +249,9 @@ export const useStore = create<AppState>()(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ points })
-        }).catch(err => {
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed to update points'); })
+        .catch(err => {
           console.error('Failed to update points', err);
           toast.error('Failed to update points');
         });
@@ -313,7 +319,9 @@ export const useStore = create<AppState>()(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ progress })
-        }).catch(err => {
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed to update progress'); })
+        .catch(err => {
           console.error('Failed to update progress', err);
           toast.error('Failed to update progress');
         });
@@ -327,7 +335,9 @@ export const useStore = create<AppState>()(
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ statusCategory })
-          }).catch(err => {
+          })
+          .then(res => { if (!res.ok) throw new Error('Failed to update status'); })
+          .catch(err => {
             console.error('Failed to update status', err);
             toast.error('Failed to update status');
           });
@@ -338,7 +348,9 @@ export const useStore = create<AppState>()(
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ isPending: false })
-            }).catch(err => {
+            })
+            .then(res => { if (!res.ok) throw new Error('Failed to update pending status'); })
+            .catch(err => {
               console.error('Failed to update pending status', err);
               toast.error('Failed to update pending status');
             });
@@ -365,7 +377,9 @@ export const useStore = create<AppState>()(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId })
-        }).catch(err => {
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed to update assignee'); })
+        .catch(err => {
           console.error('Failed to update assignee', err);
           toast.error('Failed to update assignee');
         });
