@@ -12,6 +12,7 @@ interface RetroState {
   socket: Socket | null;
   room: RetroRoom | null;
   user: User | null;
+  onlineUsers: User[];
   error: string | null;
   connect: (roomId: string, user: User, isCreating?: boolean, template?: string) => void;
   disconnect: () => void;
@@ -31,6 +32,7 @@ export const useRetroStore = create<RetroState>((set, get) => ({
   socket: null,
   room: null,
   user: null,
+  onlineUsers: [],
   error: null,
 
   connect: (roomId: string, user: User, isCreating?: boolean, template?: string) => {
@@ -58,6 +60,10 @@ export const useRetroStore = create<RetroState>((set, get) => ({
 
     socket.on("retro:state", (room: RetroRoom) => {
       set({ room, error: null });
+    });
+
+    socket.on("retro:users", (onlineUsers: User[]) => {
+      set({ onlineUsers });
     });
 
     socket.on("retro:error", (error: string) => {

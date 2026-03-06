@@ -14,7 +14,7 @@ interface RetroHeaderProps {
 const STAGES: RetroStage[] = ["WRITING", "REVIEW", "VOTING", "ACTION", "DONE"];
 
 export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
-  const { changeStage, toggleTimer, deleteRoom } = useRetroStore();
+  const { changeStage, toggleTimer, deleteRoom, onlineUsers } = useRetroStore();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showTimerSettings, setShowTimerSettings] = useState(false);
   const [customMinutes, setCustomMinutes] = useState(5);
@@ -158,14 +158,14 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           title="View Users"
         >
           <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Users ({room.users?.length || 0})</span>
-          <span className="sm:hidden">{room.users?.length || 0}</span>
+          <span className="hidden sm:inline">Users ({onlineUsers?.length || 0})</span>
+          <span className="sm:hidden">{onlineUsers?.length || 0}</span>
         </button>
 
         <UserListDrawer 
           isOpen={isUserDrawerOpen} 
           onClose={() => setIsUserDrawerOpen(false)} 
-          users={room.users || []} 
+          users={onlineUsers || []} 
           hostId={room.hostId}
         />
 

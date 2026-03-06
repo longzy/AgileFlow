@@ -19,6 +19,32 @@ const TEMPLATES = {
   "timeline": ["Timeline"], // Add timeline template
 };
 
+// Memory store for online users: roomId -> Set<string> (socketIds)
+// We also need to map socketId -> User to reconstruct the user list
+const roomSockets = new Map<string, Set<string>>();
+const socketUsers = new Map<string, User>();
+
+const broadcastRoomUsers = (io: Server, roomId: string) => {
+  const socketIds = roomSockets.get(roomId);
+  if (!socketIds) {
+    io.to(`retro:${roomId}`).emit("retro:users", []);
+    return;
+  }
+
+  const users: User[] = [];
+  const seenUserIds = new Set<string>();
+
+  socketIds.forEach(socketId => {
+    const user = socketUsers.get(socketId);
+    if (user && !seenUserIds.has(user.id)) {
+      users.push(user);
+      seenUserIds.add(user.id);
+    }
+  });
+
+  io.to(`retro:${roomId}`).emit("retro:users", users);
+};
+
 export function setupRetroSocket(io: Server, socket: Socket) {
   // Join Room
   socket.on("retro:join", ({ roomId, user }: { roomId: string; user: User }) => {
@@ -30,20 +56,22 @@ export function setupRetroSocket(io: Server, socket: Socket) {
       return;
     }
 
-    // Add user to room if not already present
-    if (!room.users) room.users = [];
-    if (!room.users.find(u => u.id === user.id)) {
-      room.users.push(user);
-      retroRepo.saveRoom(room);
+    // Track online user
+    if (!roomSockets.has(roomId)) {
+      roomSockets.set(roomId, new Set());
     }
+    roomSockets.get(roomId)!.add(socket.id);
+    socketUsers.set(socket.id, user);
 
     // Store session data for disconnect handling
     socket.data.userId = user.id;
     socket.data.roomId = roomId;
 
-    // Send current state to the user and broadcast to others
+    // Send current state to the user
     socket.emit("retro:state", room);
-    io.to(`retro:${roomId}`).emit("retro:state", room);
+    
+    // Broadcast online users
+    broadcastRoomUsers(io, roomId);
   });
 
   // Create Room
@@ -62,29 +90,45 @@ export function setupRetroSocket(io: Server, socket: Socket) {
       cards: [],
       votes: {},
       actionPoints: [],
-      users: [user], // Initialize with host
+      users: [], // We don't persist users anymore for online status
     };
 
     retroRepo.saveRoom(newRoom);
     socket.join(`retro:${roomId}`);
     
+    // Track online user
+    if (!roomSockets.has(roomId)) {
+      roomSockets.set(roomId, new Set());
+    }
+    roomSockets.get(roomId)!.add(socket.id);
+    socketUsers.set(socket.id, user);
+
     // Store session data
     socket.data.userId = user.id;
     socket.data.roomId = roomId;
 
     socket.emit("retro:state", newRoom);
+    
+    // Broadcast online users
+    broadcastRoomUsers(io, roomId);
   });
 
   // Handle Disconnect
   socket.on("disconnect", () => {
-    const { roomId, userId } = socket.data;
-    if (roomId && userId) {
-      const room = retroRepo.getRoom(roomId);
-      if (room && room.users) {
-        room.users = room.users.filter(u => u.id !== userId);
-        retroRepo.saveRoom(room);
-        io.to(`retro:${roomId}`).emit("retro:state", room);
+    const { roomId } = socket.data;
+    if (roomId) {
+      // Remove from online tracking
+      const socketIds = roomSockets.get(roomId);
+      if (socketIds) {
+        socketIds.delete(socket.id);
+        if (socketIds.size === 0) {
+          roomSockets.delete(roomId);
+        }
       }
+      socketUsers.delete(socket.id);
+
+      // Broadcast update
+      broadcastRoomUsers(io, roomId);
     }
   });
 

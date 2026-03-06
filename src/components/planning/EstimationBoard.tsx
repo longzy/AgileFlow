@@ -9,12 +9,12 @@ import confetti from 'canvas-confetti';
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21];
 
 export function EstimationBoard({ issue }: { issue: Issue }) {
-  const { users, currentUser, updateIssuePoints, votes, revealed, consensus, joinRoom, submitVote, revealVotes, resetVotes, hostId } = useStore();
+  const { users, onlineUsers, currentUser, updateIssuePoints, votes, revealed, consensus, joinRoom, submitVote, revealVotes, resetVotes, hostId } = useStore();
 
   const isHost = currentUser?.id === hostId;
 
-  // Ensure current user is in the list for display
-  const displayUsers = [...users];
+  // Use onlineUsers for the table display
+  const displayUsers = [...onlineUsers];
   if (currentUser && !displayUsers.find(u => u.id === currentUser.id)) {
     displayUsers.push(currentUser);
   }
@@ -75,7 +75,7 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
     }
   };
 
-  const allVoted = users.length > 0 && votes.length === users.length;
+  const allVoted = onlineUsers.length > 0 && votes.length === onlineUsers.length;
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full">

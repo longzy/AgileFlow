@@ -7,7 +7,8 @@ import { socketService } from '../services/socketService';
 import { toast } from 'react-hot-toast';
 
 interface AppState {
-  users: User[];
+  users: User[]; // Project/Group users (for assignment)
+  onlineUsers: User[]; // Real-time users (for planning poker)
   currentUser: User | null;
   sprint: Sprint | null;
   issues: Issue[];
@@ -52,6 +53,7 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       users: [],
+      onlineUsers: [],
       currentUser: null,
       sprint: null,
       issues: [],
@@ -107,7 +109,7 @@ export const useStore = create<AppState>()(
         });
 
         socketService.on("board_users", (users: User[]) => {
-          set({ users });
+          set({ onlineUsers: users });
         });
 
         socketService.on("issue_updated", (updatedIssue: Issue) => {
@@ -135,7 +137,8 @@ export const useStore = create<AppState>()(
         
         set((state) => ({
           currentUser: newUser,
-          users: [...state.users, newUser]
+          users: [...state.users, newUser],
+          onlineUsers: [...state.onlineUsers, newUser]
         }));
         
         get().initSocket();
