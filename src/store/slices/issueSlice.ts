@@ -136,6 +136,7 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
     
     if (wasTodo && newStatus === 'in-progress') {
       newIssues.splice(issueIndex, 1);
+      // Keep existing assignee if present, otherwise it remains undefined
       updatedIssue = { ...issue, progress, status: newStatus };
       newIssues.push(updatedIssue);
     } else {

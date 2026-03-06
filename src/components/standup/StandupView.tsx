@@ -77,6 +77,7 @@ export function StandupView() {
           toast.error('Please assign a user before moving to active area');
           return;
         }
+        // Only update progress, do NOT re-assign user
         updateIssueProgress(activeIdStr, 0);
       }
       return;
