@@ -353,31 +353,34 @@ export const getBoardData = async (boardId: string, sprintState: string = 'activ
     (issuesData.issues || []).forEach((i: any) => {
       const user = i.fields.assignee;
       if (user && !rawUsersMap.has(user.key)) {
-        // Fix: Use accountId (Cloud) or name (Server) as ID, fallback to key
-        // This ensures assignIssue receives the correct identifier
-        const userId = user.accountId || user.name || user.key;
-        rawUsersMap.set(user.key, {
-          id: userId,
-          name: user.displayName || user.name,
-          avatarUrl: user.avatarUrls?.['48x48']
-        });
+        rawUsersMap.set(user.key, user);
       }
     });
 
     // Fetch avatars and build resolved users
     const resolvedUsersMap = new Map();
     await Promise.all(Array.from(rawUsersMap.entries()).map(async ([jiraKey, user]: [string, any]) => {
-      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`;
-      if (user.avatarUrl) {
-        const base64 = await fetchAvatarAsBase64(user.avatarUrl);
+      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.displayName || user.name)}`;
+      if (user.avatarUrls?.['48x48']) {
+        const base64 = await fetchAvatarAsBase64(user.avatarUrls['48x48']);
         if (base64) {
           avatar = base64;
         }
       }
-      // Map key is jiraKey (for lookup), but user object contains the correct ID for assignment
+
+      // Fix: Use accountId (Cloud) or name (Server) as ID, fallback to key.
+      // User feedback confirms 'name' field contains the correct login username (e.g. "huixin.a")
+      // while 'key' might be an internal ID (e.g. "JIRAUSER10107").
+      const userId = user.name || user.accountId || user.key;
+      
+      // Log for debugging purposes to verify we are selecting the correct ID
+      if (userId !== user.key) {
+        console.log(`[Jira] Mapped user key '${user.key}' to ID '${userId}'`);
+      }
+
       resolvedUsersMap.set(jiraKey, {
-        id: user.id,
-        name: user.name,
+        id: userId,
+        name: user.displayName || user.name,
         avatar
       });
     }));
