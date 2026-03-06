@@ -44,10 +44,19 @@ export function StandupView() {
     const activeType = active.data.current?.type;
     const overType = over.data.current?.type;
 
-    // 1. Reordering Swimlanes
+    // 1. Reordering Swimlanes or Moving back to Backlog
     if (activeType === 'swimlane') {
-      if (activeIdStr !== overIdStr) {
-        const activeIssueId = activeIdStr.replace('swimlane-', '');
+      const activeIssueId = activeIdStr.replace('swimlane-', '');
+
+      // Check if dropped on Backlog (container or item)
+      const overIssue = issues.find(i => i.id === overIdStr);
+      if (overIdStr === 'todo' || (overType === 'issue' && overIssue?.status === 'todo')) {
+        updateIssueStatus(activeIssueId, 'todo');
+        return;
+      }
+
+      // Reordering within swimlanes
+      if (activeIdStr !== overIdStr && overType === 'swimlane') {
         const overIssueId = overIdStr.replace('swimlane-', '');
         reorderIssues(activeIssueId, overIssueId);
       }
