@@ -7,6 +7,20 @@ export interface User {
   isHost: boolean;
 }
 
+export interface Board {
+  id: string;
+  name: string;
+  type: string;
+}
+
+export interface Sprint {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
 export interface Issue {
   id: string;
   key: string;
