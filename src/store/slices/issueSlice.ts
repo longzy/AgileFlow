@@ -171,7 +171,20 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ statusCategory })
       })
-      .then(res => { if (!res.ok) throw new Error('Failed to update status'); })
+      .then(async res => { 
+        if (!res.ok) throw new Error('Failed to update status');
+        
+        // Workaround: Jira often auto-assigns to current user on transition.
+        // We enforce the original assignee if one existed.
+        // ONLY when moving from Backlog (todo) to Swimlane (in-progress)
+        if (wasTodo && issue.assignee) {
+          await fetch(`/api/jira/issue/${id}/assignee`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: issue.assignee.id })
+          });
+        }
+      })
       .catch(err => {
         console.error('Failed to update status', err);
         toast.error('Failed to update status');
