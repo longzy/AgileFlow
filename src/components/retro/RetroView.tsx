@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useStore } from "../../store/useStore";
-import { useRetroStore } from "../../stores/useRetroStore";
+import { useRetroStore } from "../../store/useRetroStore";
 import { RetroRoomView } from "./RetroRoomView";
 import { RetroLobby } from "./RetroLobby";
 

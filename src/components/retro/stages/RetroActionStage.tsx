@@ -1,5 +1,5 @@
 import { RetroRoom, RetroUser } from "@/shared/retro";
-import { useRetroStore } from "../../../stores/useRetroStore";
+import { useRetroStore } from "../../../store/useRetroStore";
 import { CheckCircle, Circle, User, Calendar, ChevronDown } from "lucide-react";
 import { useState } from "react";
 

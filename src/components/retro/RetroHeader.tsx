@@ -1,5 +1,5 @@
 import { RetroRoom, RetroStage } from "@/shared/retro";
-import { useRetroStore } from "../../stores/useRetroStore";
+import { useRetroStore } from "../../store/useRetroStore";
 import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Users, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserListDrawer } from "./UserListDrawer";

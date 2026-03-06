@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RetroRoom, RetroCard } from "@/shared/retro";
-import { useRetroStore } from "../../../stores/useRetroStore";
+import { useRetroStore } from "../../../store/useRetroStore";
 import { Plus, Edit2, Check, EyeOff } from "lucide-react";
 import { TimelineWritingStage } from "./TimelineWritingStage";
 

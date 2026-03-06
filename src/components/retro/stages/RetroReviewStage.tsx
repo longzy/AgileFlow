@@ -1,5 +1,5 @@
 import { RetroRoom, RetroCard } from "@/shared/retro";
-import { useRetroStore } from "../../../stores/useRetroStore";
+import { useRetroStore } from "../../../store/useRetroStore";
 import { Edit2, GripVertical, Layers } from "lucide-react";
 import { useState } from "react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useSensor, useSensors, PointerSensor, closestCenter } from "@dnd-kit/core";

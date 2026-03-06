@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store/useStore";
-import { useRetroStore } from "../../stores/useRetroStore";
+import { useRetroStore } from "../../store/useRetroStore";
 import { Plus, Users, ArrowRight } from "lucide-react";
 
 export function RetroLobby() {

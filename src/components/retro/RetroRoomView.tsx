@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useMachine } from "@xstate/react";
 import { retroMachine } from "../../machines/retroMachine";
-import { useRetroStore } from "../../stores/useRetroStore";
+import { useRetroStore } from "../../store/useRetroStore";
 import { useStore } from "../../store/useStore";
 import { RetroWritingStage } from "./stages/RetroWritingStage";
 import { RetroReviewStage } from "./stages/RetroReviewStage";

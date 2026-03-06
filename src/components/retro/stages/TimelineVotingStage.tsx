@@ -1,5 +1,5 @@
 import { RetroRoom, RetroCard } from "@/shared/retro";
-import { useRetroStore } from "../../../stores/useRetroStore";
+import { useRetroStore } from "../../../store/useRetroStore";
 import { ThumbsUp, Layers } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
