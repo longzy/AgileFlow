@@ -18,7 +18,7 @@ const fetchAvatarAsBase64 = async (url: string) => {
   try {
     const res = await fetch(url, {
       headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(10000) // Increased timeout to 10s
     });
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
@@ -312,7 +312,7 @@ export const getGroupMembers = async (groupName: string) => {
   try {
     const response = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/group/member?groupname=${encodeURIComponent(groupName)}`, {
       headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(15000) // Increased timeout to 15s
     });
 
     if (!response.ok) {
@@ -322,24 +322,32 @@ export const getGroupMembers = async (groupName: string) => {
     const data = await response.json();
     const members = data.values || [];
 
-    const resolvedMembers = await Promise.all(members.map(async (u: any) => {
-      let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.displayName || u.name)}`;
-      const avatarUrl = u.avatarUrls?.['48x48'];
-      
-      if (avatarUrl) {
-        const base64 = await fetchAvatarAsBase64(avatarUrl);
-        if (base64) {
-          avatar = base64;
+    // Process members in batches to avoid overwhelming the server with avatar requests
+    const resolvedMembers = [];
+    const batchSize = 10;
+    
+    for (let i = 0; i < members.length; i += batchSize) {
+      const batch = members.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map(async (u: any) => {
+        let avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.displayName || u.name)}`;
+        const avatarUrl = u.avatarUrls?.['48x48'];
+        
+        if (avatarUrl) {
+          const base64 = await fetchAvatarAsBase64(avatarUrl);
+          if (base64) {
+            avatar = base64;
+          }
         }
-      }
 
-      return {
-        // Prefer accountId (Cloud), then name (Server), then key
-        id: u.accountId || u.name || u.key,
-        name: u.displayName || u.name,
-        avatar
-      };
-    }));
+        return {
+          // Prefer accountId (Cloud), then name (Server), then key
+          id: u.accountId || u.name || u.key,
+          name: u.displayName || u.name,
+          avatar
+        };
+      }));
+      resolvedMembers.push(...batchResults);
+    }
 
     return resolvedMembers;
 
