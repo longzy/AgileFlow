@@ -1,5 +1,5 @@
 import { StateCreator } from 'zustand';
-import { Board, User, Sprint } from '../../types/index';
+import { Board, User, Sprint, Group } from '../../types/index';
 import { socketService } from '../../services/socketService';
 import { toast } from 'react-hot-toast';
 
@@ -7,18 +7,24 @@ export interface BoardSlice {
   boards: Board[];
   selectedBoard: Board | null;
   users: User[];
+  groups: Group[];
+  selectedGroup: string;
   sprint: Sprint | null;
   fetchBoards: () => Promise<void>;
   selectBoard: (board: Board) => void;
   clearSelectedBoard: () => void;
   fetchBoardData: (sprintState?: 'active' | 'future') => Promise<void>;
-  fetchProjectUsers: (boardId: string) => Promise<void>;
+  fetchProjectUsers: (boardId: string, group?: string) => Promise<void>;
+  fetchGroups: () => Promise<void>;
+  setSelectedGroup: (group: string) => void;
 }
 
 export const createBoardSlice: StateCreator<any, [], [], BoardSlice> = (set, get) => ({
   boards: [],
   selectedBoard: null,
   users: [],
+  groups: [],
+  selectedGroup: '软件部门',
   sprint: null,
   
   fetchBoards: async () => {
@@ -49,7 +55,7 @@ export const createBoardSlice: StateCreator<any, [], [], BoardSlice> = (set, get
   },
 
   fetchBoardData: async (sprintState = 'active') => {
-    const { selectedBoard, currentUser } = get() as any;
+    const { selectedBoard, currentUser, selectedGroup } = get() as any;
     if (!selectedBoard || !currentUser) return;
     
     socketService.joinBoard(selectedBoard.id, currentUser);
@@ -58,7 +64,7 @@ export const createBoardSlice: StateCreator<any, [], [], BoardSlice> = (set, get
     try {
       const [boardRes, usersRes] = await Promise.all([
         fetch(`/api/jira/board-data?boardId=${selectedBoard.id}&state=${sprintState}`),
-        fetch(`/api/jira/board/${selectedBoard.id}/users`)
+        fetch(`/api/jira/board/${selectedBoard.id}/users?group=${encodeURIComponent(selectedGroup)}`)
       ]);
 
       if (!boardRes.ok) throw new Error('Failed to fetch board data');
@@ -83,14 +89,34 @@ export const createBoardSlice: StateCreator<any, [], [], BoardSlice> = (set, get
     }
   },
 
-  fetchProjectUsers: async (boardId) => {
+  fetchProjectUsers: async (boardId, groupOverride) => {
     try {
-      const res = await fetch(`/api/jira/board/${boardId}/users`);
+      const group = groupOverride || (get() as any).selectedGroup;
+      const res = await fetch(`/api/jira/board/${boardId}/users?group=${encodeURIComponent(group)}`);
       if (!res.ok) throw new Error('Failed to fetch users');
       const users = await res.json();
       set({ users });
     } catch (error) {
       console.error(error);
+    }
+  },
+
+  fetchGroups: async () => {
+    try {
+      const res = await fetch('/api/jira/groups');
+      if (!res.ok) throw new Error('Failed to fetch groups');
+      const groups = await res.json();
+      set({ groups });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  setSelectedGroup: (group: string) => {
+    set({ selectedGroup: group });
+    const { selectedBoard } = get() as any;
+    if (selectedBoard) {
+      (get() as any).fetchProjectUsers(selectedBoard.id, group);
     }
   }
 });

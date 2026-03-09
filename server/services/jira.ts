@@ -266,6 +266,38 @@ export const assignIssue = async (issueId: string, userId: string) => {
   }
 };
 
+export const getGroups = async (query: string = '') => {
+  if (!config.JIRA.BASE_URL) {
+    return [
+      { name: '软件部门', html: '软件部门' },
+      { name: '测试部门', html: '测试部门' },
+      { name: '产品部门', html: '产品部门' }
+    ];
+  }
+
+  try {
+    const url = new URL(`${config.JIRA.BASE_URL}/rest/api/2/groups/picker`);
+    if (query) {
+      url.searchParams.append('query', query);
+    }
+    
+    const response = await fetch(url.toString(), {
+      headers: getJiraHeaders(),
+      signal: AbortSignal.timeout(5000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch groups: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.groups || [];
+  } catch (error) {
+    console.error("Jira Get Groups Error:", error);
+    return [];
+  }
+};
+
 export const getGroupMembers = async (groupName: string) => {
   if (!config.JIRA.BASE_URL) {
     // Return mock users for group

@@ -72,7 +72,7 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
     };
   }, [isAssigneeOpen]);
 
-  const toggleDropdown = (e: React.MouseEvent) => {
+  const toggleDropdown = (e: any) => {
     e.stopPropagation();
     if (isOverlay) return;
 

@@ -1,5 +1,10 @@
 export type Stage = "WRITING" | "REVIEW" | "VOTING" | "ACTION" | "DONE";
 
+export interface Group {
+  name: string;
+  html: string;
+}
+
 export interface User {
   id: string;
   name: string;
