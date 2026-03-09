@@ -55,15 +55,6 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
         toast.error('Failed to update status');
       });
 
-      // Update resolution
-      const resolutionId = status === 'done' ? '10000' : null;
-      fetch(`/api/jira/issue/${id}/resolution`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolutionId })
-      })
-      .catch(err => console.error('Failed to update resolution', err));
-
       // Update pending custom field
       const isPending = status === 'pending';
       fetch(`/api/jira/issue/${id}/pending`, {
@@ -198,15 +189,6 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
         console.error('Failed to update status', err);
         toast.error('Failed to update status');
       });
-
-      // Update resolution
-      const resolutionId = newStatus === 'done' ? '10000' : null;
-      fetch(`/api/jira/issue/${id}/resolution`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolutionId })
-      })
-      .catch(err => console.error('Failed to update resolution', err));
 
       // If it was pending and now it's in-progress or done, clear the pending flag
       if (issue.status === 'pending') {
