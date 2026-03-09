@@ -113,7 +113,7 @@ export const createBoardSlice: StateCreator<any, [], [], BoardSlice> = (set, get
   },
 
   setSelectedGroup: (group: string) => {
-    set({ selectedGroup: group });
+    set({ selectedGroup: group, users: [] });
     const { selectedBoard } = get() as any;
     if (selectedBoard) {
       (get() as any).fetchProjectUsers(selectedBoard.id, group);
