@@ -34,10 +34,9 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
 
   useEffect(() => {
     if (isAssigneeOpen && selectedBoard) {
-      fetchProjectUsers(selectedBoard.id);
       setSearchQuery(''); // Reset search when opening
     }
-  }, [isAssigneeOpen, selectedBoard, fetchProjectUsers]);
+  }, [isAssigneeOpen, selectedBoard]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
