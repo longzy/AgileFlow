@@ -1,5 +1,5 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
@@ -26,6 +26,19 @@ router.post("/issue/:issueId/assignee", async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to assign issue" });
+  }
+});
+
+// Update Issue Resolution
+router.post("/issue/:issueId/resolution", async (req, res) => {
+  const { issueId } = req.params;
+  const { resolutionId } = req.body;
+
+  try {
+    await updateIssueResolution(issueId, resolutionId);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update Jira issue resolution" });
   }
 });
 
