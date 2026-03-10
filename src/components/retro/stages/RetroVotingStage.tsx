@@ -14,6 +14,17 @@ const TEMPLATE_COLUMNS: Record<string, string[]> = {
   "mad-sad-glad": ["Mad", "Sad", "Glad"],
 };
 
+const getColumnColor = (column: string) => {
+  const lower = column.toLowerCase();
+  if (lower.includes('start') || lower.includes('well') || lower.includes('glad')) {
+    return { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' };
+  }
+  if (lower.includes('stop') || lower.includes('improve') || lower.includes('mad')) {
+    return { bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500', border: 'border-rose-200' };
+  }
+  return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' };
+};
+
 export function RetroVotingStage({ room, currentUser }: Props) {
   const { vote, revokeVote } = useRetroStore();
   const columns = TEMPLATE_COLUMNS[room.template] || [];
@@ -56,79 +67,89 @@ export function RetroVotingStage({ room, currentUser }: Props) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-6 text-center">
+      <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Voting Stage</h2>
-        <p className="text-gray-500">Vote for the most important cards. You have <strong className="text-blue-600">{votesRemaining}</strong> votes remaining.</p>
+        <p className="text-gray-500 text-sm mt-1">Vote for the most important cards. You have <strong className="text-blue-600 font-bold">{votesRemaining}</strong> votes remaining.</p>
       </div>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
-        {columns.map(column => (
-          <div key={column} className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 shrink-0">
-              <h3 className="text-lg font-bold text-gray-900">{column}</h3>
-            </div>
-            
-            <div className="flex-1 p-4 overflow-y-auto space-y-4">
-              {parentCards.filter(c => c.column === column).map(card => {
-                const children = cardsByParent[card.id] || [];
-                const hasVoted = userVotes.includes(card.id);
-                const voteCount = getVoteCount(card.id);
-                const isGroup = children.length > 0;
-                
-                return (
-                  <div 
-                    key={card.id} 
-                    className={`rounded-xl border transition-all ${
-                      hasVoted 
-                        ? "bg-blue-50 border-blue-200 ring-1 ring-blue-200" 
-                        : "bg-gray-50 border-gray-200 hover:border-blue-200"
-                    }`}
-                  >
-                    {isGroup && (
-                      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200/50 text-xs font-medium text-gray-500 bg-gray-100/50 rounded-t-xl">
-                        <Layers className="w-3 h-3" />
-                        Group ({children.length + 1} cards)
-                      </div>
-                    )}
-                    
-                    <div className="p-4">
-                      <div className="space-y-3">
-                        {/* Parent Card */}
-                        <p className="text-gray-800 whitespace-pre-wrap break-words">{card.text}</p>
-                        
-                        {/* Child Cards */}
-                        {children.map(child => (
-                          <div key={child.id} className="pl-3 border-l-2 border-gray-300 relative">
-                            <p className="text-gray-600 text-sm whitespace-pre-wrap break-words">{child.text}</p>
-                          </div>
-                        ))}
-                      </div>
+        {columns.map(column => {
+          const colors = getColumnColor(column);
+          return (
+            <div key={column} className="flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-4 px-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
+                <h3 className="text-lg font-bold text-gray-900">{column}</h3>
+                <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {parentCards.filter(c => c.column === column).length}
+                </span>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2">
+                {parentCards.filter(c => c.column === column).map(card => {
+                  const children = cardsByParent[card.id] || [];
+                  const hasVoted = userVotes.includes(card.id);
+                  const voteCount = getVoteCount(card.id);
+                  const isGroup = children.length > 0;
+                  
+                  return (
+                    <div 
+                      key={card.id} 
+                      className={`rounded-2xl border transition-all ${
+                        hasVoted 
+                          ? "bg-blue-50/50 border-blue-300 ring-2 ring-blue-500 shadow-md" 
+                          : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-md shadow-sm"
+                      }`}
+                    >
+                      {isGroup && (
+                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-500 bg-gray-50/80 rounded-t-2xl uppercase tracking-wider">
+                          <Layers className="w-3.5 h-3.5" />
+                          Group ({children.length + 1} cards)
+                        </div>
+                      )}
                       
-                      <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-200/50">
-                        <span className="text-xs text-gray-400">
-                          {isGroup ? "Group Vote" : (card.anonymous ? "Anonymous" : "User")}
-                        </span>
+                      <div className="p-5">
+                        <div className="space-y-4">
+                          {/* Parent Card */}
+                          <div className="flex items-start gap-2">
+                            {!isGroup && <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />}
+                            <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
+                          </div>
+                          
+                          {/* Child Cards */}
+                          {children.map(child => (
+                            <div key={child.id} className="pl-4 border-l-2 border-gray-200 relative ml-1">
+                              <p className="text-gray-600 text-sm whitespace-pre-wrap break-words leading-relaxed">{child.text}</p>
+                            </div>
+                          ))}
+                        </div>
                         
-                        <button
-                          onClick={() => handleVote(card.id)}
-                          disabled={!hasVoted && votesRemaining === 0}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            hasVoted 
-                              ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700" 
-                              : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                          }`}
-                        >
-                          <ThumbsUp className={`w-4 h-4 ${hasVoted ? "fill-white" : ""}`} />
-                          <span>{voteCount > 0 ? voteCount : "Vote"}</span>
-                        </button>
+                        <div className="mt-5 flex items-center justify-between pt-4 border-t border-gray-100">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${isGroup ? 'bg-gray-100 text-gray-600' : `${colors.bg} ${colors.text}`}`}>
+                            {isGroup ? "Group Vote" : (card.anonymous ? "Anonymous" : "User")}
+                          </span>
+                          
+                          <button
+                            onClick={() => handleVote(card.id)}
+                            disabled={!hasVoted && votesRemaining === 0}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all ${
+                              hasVoted 
+                                ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700" 
+                                : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                            }`}
+                          >
+                            <ThumbsUp className={`w-4 h-4 ${hasVoted ? "fill-white" : ""}`} />
+                            <span>{voteCount > 0 ? voteCount : "Vote"}</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

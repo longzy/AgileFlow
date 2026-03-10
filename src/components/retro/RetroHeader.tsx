@@ -113,22 +113,22 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   const emojis = ["👍", "🎉", "🔥", "❤️", "😂", "🚀"];
 
   return (
-    <header className="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between shadow-sm z-10 gap-y-3 w-full min-w-0">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between z-10 gap-y-2 w-full min-w-0">
       <div className="flex flex-col gap-1 flex-1 min-w-0 mr-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-base sm:text-lg font-bold text-gray-900 leading-tight truncate">
+        <div className="flex items-center gap-2">
+          <h1 className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
             Retro: {room.template}
           </h1>
-          <div className="flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium text-gray-600 shrink-0 border border-gray-200">
+          <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-gray-600 shrink-0 border border-gray-200 uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             {room.stage}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-          <span className="font-mono truncate">ID: {room.id}</span>
+        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
+          <span className="font-mono truncate bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">ID: {room.id}</span>
           <button 
             onClick={handleCopyRoomId}
-            className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition-colors shrink-0"
+            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors shrink-0"
             title="Copy Room ID"
           >
             {copied ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -136,13 +136,13 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 shrink-0 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm mr-2">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+        <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5 shadow-sm">
           {emojis.map(emoji => (
             <button
               key={emoji}
               onClick={() => sendEmoji(emoji)}
-              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-lg sm:text-xl hover:bg-gray-100 rounded-lg transition-transform active:scale-90"
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-base sm:text-lg hover:bg-gray-100 rounded-md transition-transform active:scale-90"
               title={`Send ${emoji}`}
             >
               {emoji}
@@ -150,18 +150,18 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           ))}
         </div>
         {timeLeft !== null && (
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className={`flex items-center gap-1.5 sm:gap-2 font-mono font-bold text-sm sm:text-lg px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border ${room.timerPausedAt ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
-              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <div className={`flex items-center gap-1.5 font-mono font-bold text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border ${room.timerPausedAt ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {formatTime(timeLeft)}
             </div>
             {isHost && (
               <button
                 onClick={toggleTimer}
-                className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${room.timerPausedAt ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
+                className={`p-1 sm:p-1.5 rounded-lg border transition-colors ${room.timerPausedAt ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}
                 title={room.timerPausedAt ? "Resume Timer" : "Pause Timer"}
               >
-                {room.timerPausedAt ? <Play className="w-4 h-4 sm:w-5 sm:h-5" /> : <Pause className="w-4 h-4 sm:w-5 sm:h-5" />}
+                {room.timerPausedAt ? <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </button>
             )}
           </div>
@@ -169,7 +169,7 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
 
         <button
           onClick={() => setIsUserDrawerOpen(true)}
-          className="flex items-center gap-1.5 sm:gap-2 bg-white px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium text-xs sm:text-sm shrink-0"
+          className="flex items-center gap-1.5 bg-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium text-xs sm:text-sm shrink-0"
           title="View Users"
         >
           <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -185,62 +185,62 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
         />
 
         {isHost && room.stage !== "DONE" && (
-          <div className="flex items-center gap-2 sm:gap-3 relative shrink-0">
+          <div className="flex items-center gap-2 relative shrink-0">
             {(room.stage === "WRITING" || room.stage === "VOTING") && !room.endTime && (
               <div className="relative flex items-center">
                 {showTimerSettings ? (
-                  <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-1 shadow-lg absolute right-0 top-full mt-2 z-50">
+                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg p-1 shadow-lg absolute right-0 top-full mt-2 z-50">
                     <input 
                       type="number" 
                       min="1" 
                       max="60" 
                       value={customMinutes}
                       onChange={(e) => setCustomMinutes(parseInt(e.target.value) || 5)}
-                      className="w-12 sm:w-16 px-1 sm:px-2 py-1 text-xs sm:text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-500"
+                      className="w-12 sm:w-14 px-1 py-0.5 text-xs sm:text-sm border border-gray-200 rounded-md outline-none focus:border-blue-500"
                     />
-                    <span className="text-xs sm:text-sm text-gray-500">m</span>
+                    <span className="text-xs text-gray-500">m</span>
                     <button
                       onClick={() => {
                         changeStage(room.stage, customMinutes);
                         setShowTimerSettings(false);
                       }}
-                      className="p-1 sm:p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                      className="p-1 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
                     >
-                      <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <Play className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => setShowTimerSettings(false)}
-                      className="p-1 sm:p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="p-1 text-gray-400 hover:bg-gray-100 rounded-md transition-colors"
                     >
                       &times;
                     </button>
                   </div>
                 ) : null}
-                <div className="flex items-center bg-blue-50 rounded-xl border border-blue-100 overflow-hidden">
+                <div className="flex items-center bg-blue-50 rounded-lg border border-blue-100 overflow-hidden">
                   <button
                     onClick={() => changeStage(room.stage, 5)} // default 5 mins
-                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2 text-blue-600 font-medium hover:bg-blue-100 transition-colors text-xs sm:text-sm"
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-blue-600 font-medium hover:bg-blue-100 transition-colors text-xs sm:text-sm"
                   >
-                    <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Play className="w-3 h-3" />
                     5m
                   </button>
-                  <div className="w-px h-4 sm:h-6 bg-blue-200"></div>
+                  <div className="w-px h-4 bg-blue-200"></div>
                   <button
                     onClick={() => setShowTimerSettings(!showTimerSettings)}
-                    className="px-1.5 sm:px-2 py-1.5 sm:py-2 text-blue-600 hover:bg-blue-100 transition-colors"
+                    className="px-1.5 py-1 sm:py-1.5 text-blue-600 hover:bg-blue-100 transition-colors"
                     title="Custom Timer"
                   >
-                    <Settings2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <Settings2 className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             )}
             <button
               onClick={handleNextStage}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-900 text-white font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm text-xs sm:text-sm whitespace-nowrap"
+              className="flex items-center gap-1 px-3 sm:px-4 py-1 sm:py-1.5 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors shadow-sm text-xs sm:text-sm whitespace-nowrap"
             >
               Next
-              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         )}
@@ -258,17 +258,17 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
                 a.download = `retro-${room.id}.md`;
                 a.click();
               }}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm text-xs sm:text-sm"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-xs sm:text-sm"
             >
-              <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+              <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Export</span>
             </button>
             <button
               onClick={handleDeleteRoom}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-50 text-red-600 font-medium rounded-xl hover:bg-red-100 transition-colors shadow-sm border border-red-100"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors shadow-sm border border-red-100"
               title="Delete Room"
             >
-              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         )}

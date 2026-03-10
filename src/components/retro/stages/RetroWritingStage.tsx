@@ -15,6 +15,17 @@ const TEMPLATE_COLUMNS: Record<string, string[]> = {
   "mad-sad-glad": ["Mad", "Sad", "Glad"],
 };
 
+const getColumnColor = (column: string) => {
+  const lower = column.toLowerCase();
+  if (lower.includes('start') || lower.includes('well') || lower.includes('glad')) {
+    return { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' };
+  }
+  if (lower.includes('stop') || lower.includes('improve') || lower.includes('mad')) {
+    return { bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500', border: 'border-rose-200' };
+  }
+  return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' };
+};
+
 export function RetroWritingStage({ room, currentUser }: Props) {
   const { addCard, editCard } = useRetroStore();
   const columns = TEMPLATE_COLUMNS[room.template] || [];
@@ -44,8 +55,12 @@ export function RetroWritingStage({ room, currentUser }: Props) {
 
   return (
     <div className="h-full flex flex-col min-w-0">
-      <div className="flex justify-end mb-4">
-        <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Writing Stage</h2>
+          <p className="text-gray-500 text-sm mt-1">Add your thoughts to the columns below.</p>
+        </div>
+        <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
           <input
             type="checkbox"
             checked={anonymous}
@@ -58,73 +73,85 @@ export function RetroWritingStage({ room, currentUser }: Props) {
       </div>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map(column => (
-          <div key={column} className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">{column}</h3>
-            </div>
-            
-            <div className="flex-1 p-4 overflow-y-auto space-y-3">
-              {room.cards.filter(c => c.column === column).map(card => (
-                <div key={card.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 group relative">
-                  {editingCardId === card.id ? (
-                    <div className="flex flex-col gap-2">
-                      <textarea
-                        value={editCardText}
-                        onChange={(e) => setEditCardText(e.target.value)}
-                        className="w-full p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-                        rows={3}
-                        autoFocus
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingCardId(null)} className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-                        <button onClick={() => handleEditCard(card.id)} className="text-xs bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save</button>
+        {columns.map(column => {
+          const colors = getColumnColor(column);
+          return (
+            <div key={column} className="flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-4 px-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
+                <h3 className="text-lg font-bold text-gray-900">{column}</h3>
+                <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                  {room.cards.filter(c => c.column === column).length}
+                </span>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-3 pb-4 px-2">
+                {room.cards.filter(c => c.column === column).map(card => (
+                  <div key={card.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 group relative hover:shadow-md transition-shadow">
+                    {editingCardId === card.id ? (
+                      <div className="flex flex-col gap-3">
+                        <textarea
+                          value={editCardText}
+                          onChange={(e) => setEditCardText(e.target.value)}
+                          className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                          rows={3}
+                          autoFocus
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
+                          <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-gray-800 whitespace-pre-wrap">{card.text}</p>
-                      <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-                        <span>{card.anonymous ? "Anonymous" : "User"}</span>
-                        {card.authorId === currentUser.id && (
-                          <button
-                            onClick={() => {
-                              setEditingCardId(card.id);
-                              setEditCardText(card.text);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
+                          <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed flex-1">{card.text}</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-xs">
+                          <span className={`px-2.5 py-1 rounded-full font-medium ${colors.bg} ${colors.text}`}>
+                            {card.anonymous ? "Anonymous" : "User"}
+                          </span>
+                          {card.authorId === currentUser.id && (
+                            <button
+                              onClick={() => {
+                                setEditingCardId(card.id);
+                                setEditCardText(card.text);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newCardText[column] || ""}
-                  onChange={(e) => setNewCardText(prev => ({ ...prev, [column]: e.target.value }))}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddCard(column)}
-                  placeholder="Add a card..."
-                  className="flex-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-                <button
-                  onClick={() => handleAddCard(column)}
-                  disabled={!newCardText[column]?.trim()}
-                  className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
+              <div className="mt-2 px-2">
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={newCardText[column] || ""}
+                    onChange={(e) => setNewCardText(prev => ({ ...prev, [column]: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddCard(column)}
+                    placeholder={`Add to ${column}...`}
+                    className="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-shadow text-sm"
+                  />
+                  <button
+                    onClick={() => handleAddCard(column)}
+                    disabled={!newCardText[column]?.trim()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

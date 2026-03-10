@@ -18,7 +18,18 @@ const TEMPLATE_COLUMNS: Record<string, string[]> = {
   "mad-sad-glad": ["Mad", "Sad", "Glad"],
 };
 
-function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean }) {
+const getColumnColor = (column: string) => {
+  const lower = column.toLowerCase();
+  if (lower.includes('start') || lower.includes('well') || lower.includes('glad')) {
+    return { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500', border: 'border-emerald-200' };
+  }
+  if (lower.includes('stop') || lower.includes('improve') || lower.includes('mad')) {
+    return { bg: 'bg-rose-50', text: 'text-rose-700', dot: 'bg-rose-500', border: 'border-rose-200' };
+  }
+  return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' };
+};
+
+function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }: { card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean; colors: any }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: { card },
@@ -38,23 +49,28 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card:
   return (
     <div
       ref={setDroppableRef}
-      className={`relative transition-colors ${isOver && !isDragging ? "bg-blue-50 ring-2 ring-blue-500 ring-offset-2" : ""}`}
+      className={`relative transition-colors rounded-2xl ${isOver && !isDragging ? "bg-blue-50 ring-2 ring-blue-500 ring-offset-2" : ""}`}
     >
       <div
         ref={setNodeRef}
         style={style}
         {...listeners}
         {...attributes}
-        className={`bg-white p-4 rounded-xl border ${isOverlay ? 'border-blue-500 shadow-xl' : 'border-gray-200 shadow-sm'} group relative touch-none`}
+        className={`bg-white p-5 rounded-2xl border ${isOverlay ? 'border-blue-500 shadow-xl' : 'border-gray-100 shadow-sm'} group relative touch-none hover:shadow-md transition-shadow`}
       >
         <div className="flex items-start gap-3">
-          <div className="mt-1 text-gray-400 cursor-grab active:cursor-grabbing">
+          <div className="mt-1 text-gray-300 cursor-grab active:cursor-grabbing hover:text-gray-500 transition-colors">
             <GripVertical className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-gray-800 whitespace-pre-wrap break-words">{card.text}</p>
-            <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-              <span>{card.anonymous ? "Anonymous" : "User"}</span>
+            <div className="flex items-start gap-2">
+              <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
+              <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
+            </div>
+            <div className="mt-4 flex items-center justify-between text-xs">
+              <span className={`px-2.5 py-1 rounded-full font-medium ${colors.bg} ${colors.text}`}>
+                {card.anonymous ? "Anonymous" : "User"}
+              </span>
               {card.authorId === currentUser.id && (
                 <button
                   onClick={(e) => {
@@ -62,9 +78,9 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card:
                     onEdit(card.id, card.text);
                   }}
                   onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
                 >
-                  <Edit2 className="w-3 h-3" />
+                  <Edit2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -75,7 +91,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card:
   );
 }
 
-function CardGroup({ parentCard, childCards, currentUser, onEdit }: { parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void }) {
+function CardGroup({ parentCard, childCards, currentUser, onEdit, colors }: { parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void; colors: any }) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: parentCard.id,
     data: { card: parentCard },
@@ -84,19 +100,19 @@ function CardGroup({ parentCard, childCards, currentUser, onEdit }: { parentCard
   return (
     <div
       ref={setDroppableRef}
-      className={`bg-gray-50 p-2 rounded-2xl border-2 border-dashed ${isOver ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
+      className={`bg-gray-50/80 p-3 rounded-3xl border-2 border-dashed ${isOver ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}
     >
-      <div className="flex items-center gap-2 px-2 py-1 text-xs font-medium text-gray-500 mb-2">
-        <Layers className="w-3 h-3" />
+      <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+        <Layers className="w-3.5 h-3.5" />
         Group ({childCards.length + 1} cards)
       </div>
-      <div className="space-y-2">
-        <DraggableCard card={parentCard} currentUser={currentUser} onEdit={onEdit} />
+      <div className="space-y-3">
+        <DraggableCard card={parentCard} currentUser={currentUser} onEdit={onEdit} colors={colors} />
         {childCards.map(child => (
-          <div key={child.id} className="pl-4 relative">
-             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-px bg-gray-300"></div>
-             <div className="absolute left-0 top-0 bottom-1/2 w-px bg-gray-300"></div>
-             <DraggableCard card={child} currentUser={currentUser} onEdit={onEdit} />
+          <div key={child.id} className="pl-6 relative">
+             <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-px bg-gray-300"></div>
+             <div className="absolute left-3 top-0 bottom-1/2 w-px bg-gray-300"></div>
+             <DraggableCard card={child} currentUser={currentUser} onEdit={onEdit} colors={colors} />
           </div>
         ))}
       </div>
@@ -172,9 +188,9 @@ export function RetroReviewStage({ room, currentUser }: Props) {
       onDragEnd={handleDragEnd}
     >
       <div className="h-full flex flex-col">
-        <div className="mb-6 text-center">
+        <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Review Stage</h2>
-          <p className="text-gray-500">
+          <p className="text-gray-500 text-sm mt-1">
             {room.hostId === currentUser.id 
               ? "Drag cards onto each other to group them. You can still edit your own cards."
               : "Review all cards. You can still edit your own cards."}
@@ -182,58 +198,67 @@ export function RetroReviewStage({ room, currentUser }: Props) {
         </div>
 
         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
-          {columns.map(column => (
-            <div key={column} className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden h-full">
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 shrink-0">
-                <h3 className="text-lg font-bold text-gray-900">{column}</h3>
-              </div>
-              
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {parentCards.filter(c => c.column === column).map(card => {
-                  const children = cardsByParent[card.id] || [];
-                  
-                  if (editingCardId === card.id) {
-                    return (
-                      <div key={card.id} className="bg-white p-4 rounded-xl border border-blue-500 shadow-sm">
-                        <textarea
-                          value={editCardText}
-                          onChange={(e) => setEditCardText(e.target.value)}
-                          className="w-full p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-                          rows={3}
-                          autoFocus
-                        />
-                        <div className="flex justify-end gap-2 mt-2">
-                          <button onClick={() => setEditingCardId(null)} className="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-                          <button onClick={() => handleEditCard(card.id)} className="text-xs bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">Save</button>
+          {columns.map(column => {
+            const colors = getColumnColor(column);
+            return (
+              <div key={column} className="flex flex-col h-full">
+                <div className="flex items-center gap-2 mb-4 px-2">
+                  <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
+                  <h3 className="text-lg font-bold text-gray-900">{column}</h3>
+                  <span className="ml-auto bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full">
+                    {parentCards.filter(c => c.column === column).length}
+                  </span>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2">
+                  {parentCards.filter(c => c.column === column).map(card => {
+                    const children = cardsByParent[card.id] || [];
+                    
+                    if (editingCardId === card.id) {
+                      return (
+                        <div key={card.id} className="bg-white p-5 rounded-2xl border border-blue-500 shadow-sm">
+                          <textarea
+                            value={editCardText}
+                            onChange={(e) => setEditCardText(e.target.value)}
+                            className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2 mt-3">
+                            <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
+                            <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  }
+                      );
+                    }
 
-                  if (children.length > 0) {
+                    if (children.length > 0) {
+                      return (
+                        <CardGroup 
+                          key={card.id} 
+                          parentCard={card} 
+                          childCards={children} 
+                          currentUser={currentUser} 
+                          onEdit={onEditStart}
+                          colors={colors}
+                        />
+                      );
+                    }
+
                     return (
-                      <CardGroup 
+                      <DraggableCard 
                         key={card.id} 
-                        parentCard={card} 
-                        childCards={children} 
+                        card={card} 
                         currentUser={currentUser} 
-                        onEdit={onEditStart} 
+                        onEdit={onEditStart}
+                        colors={colors}
                       />
                     );
-                  }
-
-                  return (
-                    <DraggableCard 
-                      key={card.id} 
-                      card={card} 
-                      currentUser={currentUser} 
-                      onEdit={onEditStart} 
-                    />
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       
@@ -243,7 +268,8 @@ export function RetroReviewStage({ room, currentUser }: Props) {
             card={activeCard} 
             currentUser={currentUser} 
             onEdit={() => {}} 
-            isOverlay 
+            isOverlay
+            colors={getColumnColor(activeCard.column)}
           />
         ) : null}
       </DragOverlay>
