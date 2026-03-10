@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import confetti from 'canvas-confetti';
 // Force UI sync
 import { useStore } from '../../store/useStore';
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragEndEvent, useDroppable } from '@dnd-kit/core';
@@ -8,6 +9,33 @@ import { IssueCard } from './IssueCard';
 import { Issue } from '../../types';
 import { BacklogSidebar } from './BacklogSidebar';
 import { Swimlane, ProgressMarker } from './Swimlane';
+
+const playDropSound = () => {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContext) {
+      const audioCtx = new AudioContext();
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = audioCtx.currentTime;
+      playTone(987.77, now, 0.1); // B5
+      playTone(1318.51, now + 0.1, 0.4); // E6
+    }
+  } catch (e) {
+    console.error('Audio play failed', e);
+  }
+};
 
 export function StandupView() {
   const { issues, updateIssueStatus, updateIssueProgress, reorderIssues, isLoading } = useStore();
@@ -37,6 +65,8 @@ export function StandupView() {
     setActiveDragData(null);
 
     if (!over) return;
+
+    playDropSound();
 
     const activeIdStr = active.id as string;
     const overIdStr = over.id as string;
@@ -73,6 +103,33 @@ export function StandupView() {
         const activeIssueId = activeIdStr.replace('marker-', '');
         if (activeIssueId === targetIssueId) {
           updateIssueProgress(activeIssueId, step);
+          
+          // Trigger confetti if completed
+          if (step === 100) {
+            const end = Date.now() + 1.5 * 1000;
+            const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+            (function frame() {
+              confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.8 },
+                colors: colors
+              });
+              confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.8 },
+                colors: colors
+              });
+
+              if (Date.now() < end) {
+                requestAnimationFrame(frame);
+              }
+            }());
+          }
         }
       }
       return;
