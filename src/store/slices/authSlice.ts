@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { User } from '../../types/index';
 import { socketService } from '../../services/socketService';
+import { AppState } from '../useStore';
 
 export interface AuthSlice {
   currentUser: User | null;
@@ -8,7 +9,7 @@ export interface AuthSlice {
   logout: () => void;
 }
 
-export const createAuthSlice: StateCreator<any, [], [], AuthSlice> = (set, get) => ({
+export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set, get) => ({
   currentUser: null,
   login: (username) => {
     const newUser = {
@@ -21,10 +22,10 @@ export const createAuthSlice: StateCreator<any, [], [], AuthSlice> = (set, get) 
     set({ currentUser: newUser });
     
     // Trigger initSocket from planning slice
-    (get() as any).initSocket();
+    get().initSocket();
   },
   logout: () => {
-    const { selectedBoard } = get() as any;
+    const { selectedBoard } = get();
     if (selectedBoard) {
       socketService.leaveBoard(selectedBoard.id);
     }

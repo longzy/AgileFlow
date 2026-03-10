@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { Vote, User } from '../../types/index';
 import { socketService } from '../../services/socketService';
+import { AppState } from '../useStore';
 
 export interface PlanningSlice {
   votes: Vote[];
@@ -18,7 +19,7 @@ export interface PlanningSlice {
   resetVotes: (roomId: string) => void;
 }
 
-export const createPlanningSlice: StateCreator<any, [], [], PlanningSlice> = (set, get) => ({
+export const createPlanningSlice: StateCreator<AppState, [], [], PlanningSlice> = (set, get) => ({
   votes: [],
   revealed: false,
   consensus: null,
@@ -28,21 +29,21 @@ export const createPlanningSlice: StateCreator<any, [], [], PlanningSlice> = (se
 
   setCurrentIssue: (issueId) => {
     set({ currentIssueId: issueId });
-    const { selectedBoard } = get() as any;
+    const { selectedBoard } = get();
     if (selectedBoard) {
       socketService.updateCurrentIssue(selectedBoard.id, issueId);
     }
   },
   
   initSocket: () => {
-    const { currentUser } = get() as any;
+    const { currentUser } = get();
     if (!currentUser) return;
 
     socketService.connect();
     socketService.userJoined(currentUser);
     
     socketService.on("connect", () => {
-      const { selectedBoard, currentUser, currentIssueId } = get() as any;
+      const { selectedBoard, currentUser, currentIssueId } = get();
       if (selectedBoard && currentUser) {
         socketService.joinBoard(selectedBoard.id, currentUser);
       }
@@ -83,14 +84,14 @@ export const createPlanningSlice: StateCreator<any, [], [], PlanningSlice> = (se
   },
   
   claimHost: (boardId) => {
-    const { currentUser } = get() as any;
+    const { currentUser } = get();
     if (currentUser) {
       socketService.claimHost(boardId, currentUser.id);
     }
   },
 
   submitVote: (roomId, points) => {
-    const { currentUser } = get() as any;
+    const { currentUser } = get();
     if (currentUser) {
       socketService.vote(roomId, currentUser.id, points);
     }

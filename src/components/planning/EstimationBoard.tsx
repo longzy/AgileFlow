@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-// Force UI sync
 import { useStore } from '../../store/useStore';
-import { Issue, Vote, User } from '../../types';
+import { Issue, User } from '../../types';
 import { Check, RotateCcw, Play, Crown } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import confetti from 'canvas-confetti';
+import { playSyncSound } from '../../utils/audio';
+import { triggerSyncConfetti } from '../../utils/effects';
+import { SyncAnimation, FightAnimation } from './EstimationAnimations';
 
 const FIBONACCI = [1, 2, 3, 5, 8, 13, 21];
 
@@ -35,70 +36,8 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
       
       if (maxPoints === minPoints) {
         setRevealAnimation('sync');
-        
-        // Play classic Zelda "Secret Discovered" 8-bit sound using Web Audio API
-        try {
-          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioContext) {
-            const audioCtx = new AudioContext();
-            const playTone = (freq: number, type: OscillatorType, startTime: number, duration: number) => {
-              const osc = audioCtx.createOscillator();
-              const gain = audioCtx.createGain();
-              osc.type = type;
-              osc.frequency.setValueAtTime(freq, startTime);
-              
-              gain.gain.setValueAtTime(0, startTime);
-              gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
-              gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-              
-              osc.connect(gain);
-              gain.connect(audioCtx.destination);
-              
-              osc.start(startTime);
-              osc.stop(startTime + duration);
-            };
-
-            const now = audioCtx.currentTime;
-            // Zelda "Secret Discovered" jingle (G5, F#5, D#5, A4, G#4, E5, G#5, C6)
-            const notes = [783.99, 739.99, 622.25, 440.00, 415.30, 659.25, 830.61, 1046.50];
-            const noteDuration = 0.12;
-            
-            notes.forEach((freq, i) => {
-              // The last note is held longer
-              const duration = i === notes.length - 1 ? 0.6 : noteDuration;
-              playTone(freq, 'square', now + i * noteDuration, duration);
-            });
-          }
-        } catch (e) {
-          console.error('Failed to play audio:', e);
-        }
-
-        const duration = 3 * 1000;
-        const end = Date.now() + duration;
-
-        const frame = () => {
-          confetti({
-            particleCount: 5,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0, y: 0.8 },
-            colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
-            zIndex: 100
-          });
-          confetti({
-            particleCount: 5,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1, y: 0.8 },
-            colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
-            zIndex: 100
-          });
-
-          if (Date.now() < end) {
-            requestAnimationFrame(frame);
-          }
-        };
-        frame();
+        playSyncSound();
+        triggerSyncConfetti();
         
         setTimeout(() => setRevealAnimation(null), 4000);
       } else if (FIBONACCI.indexOf(maxPoints) - FIBONACCI.indexOf(minPoints) >= 3) {
@@ -149,56 +88,8 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col h-full relative">
-      {/* Perfect Sync Animation */}
-      {revealAnimation === 'sync' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-sm animate-fade-in">
-          <div className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_0_30px_rgba(38,204,255,0.8)] animate-bounce">
-            Perfect Sync 🎯
-          </div>
-        </div>
-      )}
-
-      {/* Fight Animation */}
-      {revealAnimation === 'fight' && fightUsers && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="text-6xl md:text-8xl font-black text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] mb-12 animate-pulse">
-            FIGHT! 🥊
-          </div>
-          <div className="flex items-center justify-center gap-16 md:gap-32 w-full px-8">
-            {/* Min User */}
-            <div className="flex flex-col items-center animate-slide-in-left">
-              <div className="relative">
-                <img src={fightUsers.minUser.avatar} alt={fightUsers.minUser.name} className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-blue-500 object-cover shadow-[0_0_40px_rgba(59,130,246,0.5)]" />
-                <div className="absolute -bottom-4 -right-4 bg-blue-500 text-white text-2xl md:text-4xl font-bold w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-black">
-                  {fightUsers.minPoints}
-                </div>
-              </div>
-              <div className="text-white text-2xl md:text-3xl font-bold mt-6">{fightUsers.minUser.name}</div>
-              <div className="text-blue-400 text-lg md:text-xl mt-2">Lowest Estimate</div>
-            </div>
-
-            {/* VS */}
-            <div className="text-5xl md:text-7xl font-black text-white italic drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-              VS
-            </div>
-
-            {/* Max User */}
-            <div className="flex flex-col items-center animate-slide-in-right">
-              <div className="relative">
-                <img src={fightUsers.maxUser.avatar} alt={fightUsers.maxUser.name} className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-red-500 object-cover shadow-[0_0_40px_rgba(239,68,68,0.5)]" />
-                <div className="absolute -bottom-4 -left-4 bg-red-500 text-white text-2xl md:text-4xl font-bold w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-black">
-                  {fightUsers.maxPoints}
-                </div>
-              </div>
-              <div className="text-white text-2xl md:text-3xl font-bold mt-6">{fightUsers.maxUser.name}</div>
-              <div className="text-red-400 text-lg md:text-xl mt-2">Highest Estimate</div>
-            </div>
-          </div>
-          <div className="text-white/70 text-xl mt-16 animate-pulse">
-            Please discuss your estimates!
-          </div>
-        </div>
-      )}
+      <SyncAnimation show={revealAnimation === 'sync'} />
+      <FightAnimation show={revealAnimation === 'fight'} fightUsers={fightUsers} />
 
       <div className="mb-8 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm">
         <div className="flex items-center gap-3 mb-3">

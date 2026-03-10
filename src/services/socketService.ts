@@ -2,40 +2,26 @@ import { io, Socket } from "socket.io-client";
 
 class SocketService {
   private socket: Socket | null = null;
-  private listeners: Map<string, Function[]> = new Map();
 
   connect() {
-    if (this.socket) return;
+    if (this.socket?.connected) return;
     
-    this.socket = io();
+    this.socket = io({
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
     
     this.socket.on("connect", () => {
       console.log("Connected to WebSocket");
-      this.emit("connect", null);
     });
 
-    this.socket.on("room_state", (state) => {
-      this.emit("room_state", state);
-    });
-    
-    this.socket.on("user_joined_broadcast", (user) => {
-      this.emit("user_joined", user);
+    this.socket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
     });
 
-    this.socket.on("issue_updated", (issue) => {
-      this.emit("issue_updated", issue);
-    });
-
-    this.socket.on("board_users", (users) => {
-      this.emit("board_users", users);
-    });
-
-    this.socket.on("current_issue_updated", (issueId) => {
-      this.emit("current_issue_updated", issueId);
-    });
-
-    this.socket.on("board_host", (hostId) => {
-      this.emit("board_host", hostId);
+    this.socket.on("disconnect", (reason) => {
+      console.log("WebSocket disconnected:", reason);
     });
   }
 
@@ -46,65 +32,120 @@ class SocketService {
     }
   }
 
+  get isConnected() {
+    return this.socket?.connected || false;
+  }
+
+  // Generic emit method
+  emit(event: string, data?: any) {
+    if (!this.socket?.connected) {
+      console.warn(`Socket not connected. Cannot emit event: ${event}`);
+      return;
+    }
+    this.socket.emit(event, data);
+  }
+
+  // Generic on method
+  on(event: string, callback: (...args: any[]) => void) {
+    if (!this.socket) {
+      this.connect();
+    }
+    this.socket?.on(event, callback);
+  }
+
+  // Generic off method
+  off(event: string, callback?: (...args: any[]) => void) {
+    this.socket?.off(event, callback);
+  }
+
+  // Planning methods
   joinRoom(roomId: string) {
-    this.socket?.emit("join_room", roomId);
+    this.emit("join_room", roomId);
   }
 
   joinBoard(boardId: string, user: any) {
-    this.socket?.emit("join_board", { boardId, user });
+    this.emit("join_board", { boardId, user });
   }
 
   leaveBoard(boardId: string) {
-    this.socket?.emit("leave_board", boardId);
+    this.emit("leave_board", boardId);
   }
 
   updateIssue(boardId: string, issue: any) {
-    this.socket?.emit("update_issue", { boardId, issue });
+    this.emit("update_issue", { boardId, issue });
   }
 
   updateCurrentIssue(boardId: string, issueId: string | null) {
-    this.socket?.emit("update_current_issue", { boardId, issueId });
+    this.emit("update_current_issue", { boardId, issueId });
   }
 
   claimHost(boardId: string, userId: string) {
-    this.socket?.emit("claim_host", { boardId, userId });
+    this.emit("claim_host", { boardId, userId });
   }
 
   vote(roomId: string, userId: string, points: number) {
-    this.socket?.emit("vote", { roomId, userId, points });
+    this.emit("vote", { roomId, userId, points });
   }
 
   reveal(roomId: string) {
-    this.socket?.emit("reveal", roomId);
+    this.emit("reveal", roomId);
   }
 
   reset(roomId: string) {
-    this.socket?.emit("reset", roomId);
+    this.emit("reset", roomId);
   }
   
   userJoined(user: any) {
-    this.socket?.emit("user_joined", user);
+    this.emit("user_joined", user);
   }
 
-  on(event: string, callback: Function) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event)?.push(callback);
+  // Retro methods
+  retroJoin(roomId: string, user: any) {
+    this.emit("retro:join", { roomId, user });
   }
 
-  off(event: string, callback: Function) {
-    const callbacks = this.listeners.get(event);
-    if (callbacks) {
-      this.listeners.set(event, callbacks.filter(cb => cb !== callback));
-    }
+  retroCreate(roomId: string, hostId: string, template: string, user: any) {
+    this.emit("retro:create", { roomId, hostId, template, user });
   }
 
-  private emit(event: string, data: any) {
-    const callbacks = this.listeners.get(event);
-    if (callbacks) {
-      callbacks.forEach(cb => cb(data));
-    }
+  retroDeleteRoom(roomId: string, userId: string) {
+    this.emit("retro:delete_room", { roomId, userId });
+  }
+
+  retroChangeStage(roomId: string, userId: string, stage: string, durationMinutes?: number) {
+    this.emit("retro:change_stage", { roomId, userId, stage, durationMinutes });
+  }
+
+  retroAddCard(roomId: string, userId: string, column: string, text: string, anonymous: boolean) {
+    this.emit("retro:add_card", { roomId, userId, column, text, anonymous });
+  }
+
+  retroEditCard(roomId: string, userId: string, cardId: string, text: string) {
+    this.emit("retro:edit_card", { roomId, userId, cardId, text });
+  }
+
+  retroVote(roomId: string, userId: string, cardId: string) {
+    this.emit("retro:vote", { roomId, userId, cardId });
+  }
+
+  retroRevokeVote(roomId: string, userId: string, cardId: string) {
+    this.emit("retro:revoke_vote", { roomId, userId, cardId });
+  }
+
+  retroUpdateAction(roomId: string, userId: string, actionId: string, updates: any) {
+    this.emit("retro:update_action", { roomId, userId, actionId, updates });
+  }
+
+  retroToggleTimer(roomId: string, userId: string) {
+    this.emit("retro:toggle_timer", { roomId, userId });
+  }
+
+  retroMergeCards(roomId: string, userId: string, sourceCardId: string, targetCardId: string) {
+    this.emit("retro:merge_cards", { roomId, userId, sourceCardId, targetCardId });
+  }
+
+  retroSendEmoji(roomId: string, userId: string, emoji: string) {
+    this.emit("retro:emoji", { roomId, userId, emoji });
   }
 }
 

@@ -5,7 +5,7 @@ import { BoardSlice, createBoardSlice } from './slices/boardSlice';
 import { IssueSlice, createIssueSlice } from './slices/issueSlice';
 import { PlanningSlice, createPlanningSlice } from './slices/planningSlice';
 
-type AppState = AuthSlice & BoardSlice & IssueSlice & PlanningSlice & {
+export type AppState = AuthSlice & BoardSlice & IssueSlice & PlanningSlice & {
   isLoading: boolean;
   error: string | null;
 };

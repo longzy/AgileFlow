@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { io, Socket } from "socket.io-client";
-import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "@/shared/retro";
+import { socketService } from "../services/socketService";
+import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../shared/retro";
 
 interface User {
   id: string;
@@ -9,7 +9,6 @@ interface User {
 }
 
 interface RetroState {
-  socket: Socket | null;
   room: RetroRoom | null;
   user: User | null;
   onlineUsers: User[];
@@ -30,143 +29,147 @@ interface RetroState {
 }
 
 export const useRetroStore = create<RetroState>((set, get) => ({
-  socket: null,
   room: null,
   user: null,
   onlineUsers: [],
   error: null,
 
   connect: (roomId: string, user: User, isCreating?: boolean, template?: string) => {
-    const { socket: existingSocket, room } = get();
+    const { room } = get();
     
     // If already connected to the same room, do nothing
-    if (existingSocket && room?.id === roomId) {
+    if (room?.id === roomId) {
       return;
     }
 
-    // If connected to a different room, disconnect first
-    if (existingSocket) {
-      existingSocket.disconnect();
-    }
-
-    const socket = io();
+    socketService.connect();
     
-    socket.on("connect", () => {
-      if (isCreating && template) {
-        socket.emit("retro:create", { roomId, hostId: user.id, template, user });
-      } else {
-        socket.emit("retro:join", { roomId, user });
-      }
-    });
-
-    socket.on("retro:state", (room: RetroRoom) => {
+    // Setup listeners
+    socketService.on("retro:state", (room: RetroRoom) => {
       set({ room, error: null });
     });
 
-    socket.on("retro:users", (onlineUsers: User[]) => {
+    socketService.on("retro:users", (onlineUsers: User[]) => {
       set({ onlineUsers });
     });
 
-    socket.on("retro:error", (error: string) => {
+    socketService.on("retro:error", (error: string) => {
       set({ error });
     });
 
-    socket.on("retro:deleted", () => {
+    socketService.on("retro:deleted", () => {
       set({ room: null, error: "Room has been deleted by host" });
+      // Use a more React-friendly way to navigate if possible, but for now keeping it simple
       window.location.href = "/retro";
     });
 
-    socket.on("retro:emoji", ({ emoji, userId }: { emoji: string, userId: string }) => {
-      // Dispatch a custom event that the UI can listen to
+    socketService.on("retro:emoji", ({ emoji, userId }: { emoji: string, userId: string }) => {
       const event = new CustomEvent('retro-emoji', { detail: { emoji, userId } });
       window.dispatchEvent(event);
     });
 
-    set({ socket, user });
+    // Join or create room
+    if (isCreating && template) {
+      socketService.retroCreate(roomId, user.id, template, user);
+    } else {
+      socketService.retroJoin(roomId, user);
+    }
+
+    set({ user });
   },
 
   disconnect: () => {
-    const { socket } = get();
-    if (socket) {
-      socket.disconnect();
+    const { room } = get();
+    if (room) {
+      // We don't necessarily want to disconnect the whole socket if other parts of the app use it
+      // But for retro, we might want to leave the room
+      // socketService.emit("retro:leave", { roomId: room.id, userId: user?.id });
     }
-    set({ socket: null, room: null, user: null, error: null });
+    
+    // Remove listeners
+    socketService.off("retro:state");
+    socketService.off("retro:users");
+    socketService.off("retro:error");
+    socketService.off("retro:deleted");
+    socketService.off("retro:emoji");
+
+    set({ room: null, user: null, error: null });
   },
 
   createRoom: (roomId: string, hostId: string, template: string) => {
-    const { socket, user } = get();
-    if (socket && user) {
-      socket.emit("retro:create", { roomId, hostId, template, user });
+    const { user } = get();
+    if (user) {
+      socketService.retroCreate(roomId, hostId, template, user);
     }
   },
 
   deleteRoom: () => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:delete_room", { roomId: room.id, userId: user.id });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroDeleteRoom(room.id, user.id);
     }
   },
 
   changeStage: (stage: RetroStage, durationMinutes?: number) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:change_stage", { roomId: room.id, userId: user.id, stage, durationMinutes });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroChangeStage(room.id, user.id, stage, durationMinutes);
     }
   },
 
   addCard: (column: string, text: string, anonymous: boolean) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:add_card", { roomId: room.id, userId: user.id, column, text, anonymous });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroAddCard(room.id, user.id, column, text, anonymous);
     }
   },
 
   editCard: (cardId: string, text: string) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:edit_card", { roomId: room.id, userId: user.id, cardId, text });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroEditCard(room.id, user.id, cardId, text);
     }
   },
 
   vote: (cardId: string) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:vote", { roomId: room.id, userId: user.id, cardId });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroVote(room.id, user.id, cardId);
     }
   },
 
   revokeVote: (cardId: string) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:revoke_vote", { roomId: room.id, userId: user.id, cardId });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroRevokeVote(room.id, user.id, cardId);
     }
   },
 
   updateAction: (actionId: string, updates: Partial<RetroActionPoint>) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:update_action", { roomId: room.id, userId: user.id, actionId, updates });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroUpdateAction(room.id, user.id, actionId, updates);
     }
   },
 
   toggleTimer: () => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:toggle_timer", { roomId: room.id, userId: user.id });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroToggleTimer(room.id, user.id);
     }
   },
 
   mergeCards: (sourceCardId: string, targetCardId: string) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:merge_cards", { roomId: room.id, userId: user.id, sourceCardId, targetCardId });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroMergeCards(room.id, user.id, sourceCardId, targetCardId);
     }
   },
 
   sendEmoji: (emoji: string) => {
-    const { socket, room, user } = get();
-    if (socket && room && user) {
-      socket.emit("retro:emoji", { roomId: room.id, userId: user.id, emoji });
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroSendEmoji(room.id, user.id, emoji);
     }
   },
 }));

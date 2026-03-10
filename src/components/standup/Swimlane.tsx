@@ -5,10 +5,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Issue } from '../../types';
 import { cn } from '../../utils/cn';
-import { GripVertical, BookOpen, Bug, CheckSquare, CheckCircle2, PauseCircle, PlayCircle } from 'lucide-react';
+import { GripVertical, CheckCircle2, PauseCircle, PlayCircle } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const STEPS = Array.from({ length: 21 }, (_, i) => i * 5); // 0, 5, 10... 100
+
+import { IssueTypeTag } from '../common/IssueTypeTag';
 
 export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issue, isOverlay }) => {
   const { updateIssueStatus } = useStore();
@@ -41,22 +43,6 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
     zIndex: isDragging || isOverlay ? 50 : 1,
   };
 
-  const getTypeColor = (type?: string) => {
-    switch (type?.toLowerCase()) {
-      case 'story': return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case 'bug': return "bg-rose-50 text-rose-700 border-rose-200";
-      default: return "bg-sky-50 text-sky-700 border-sky-200";
-    }
-  };
-
-  const getTypeIcon = (type?: string) => {
-    switch (type?.toLowerCase()) {
-      case 'story': return <BookOpen className="w-3 h-3" />;
-      case 'bug': return <Bug className="w-3 h-3" />;
-      default: return <CheckSquare className="w-3 h-3" />;
-    }
-  };
-
   return (
     <div 
       ref={isOverlay ? undefined : setNodeRef}
@@ -87,13 +73,7 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
             )} title={`Priority: ${issue.priority}`} />
           )}
           
-          <div className={cn(
-            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border",
-            getTypeColor(issue.type)
-          )}>
-            {getTypeIcon(issue.type)}
-            <span>{issue.type || 'Task'}</span>
-          </div>
+          <IssueTypeTag type={issue.type} />
 
           <span className="text-xs font-bold text-gray-900 tracking-tight">
             {issue.key}

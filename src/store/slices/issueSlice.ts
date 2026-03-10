@@ -3,6 +3,7 @@ import { Issue, IssueStatus, User } from '../../types/index';
 import { socketService } from '../../services/socketService';
 import { toast } from 'react-hot-toast';
 import { arrayMove } from '@dnd-kit/sortable';
+import { AppState } from '../useStore';
 
 export interface IssueSlice {
   issues: Issue[];
@@ -15,13 +16,13 @@ export interface IssueSlice {
   reorderIssues: (activeId: string, overId: string) => void;
 }
 
-export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get) => ({
+export const createIssueSlice: StateCreator<AppState, [], [], IssueSlice> = (set, get) => ({
   issues: [],
   isLoading: false,
   error: null,
 
   updateIssueStatus: (id, status) => {
-    const { issues, selectedBoard } = get() as any;
+    const { issues, selectedBoard } = get();
     const issue = issues.find((i: Issue) => i.id === id);
     if (!issue) return;
     
@@ -73,7 +74,7 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
   },
 
   updateIssuePoints: (id, points) => {
-    const { issues, selectedBoard } = get() as any;
+    const { issues, selectedBoard } = get();
     const updatedIssues = issues.map((i: Issue) => i.id === id ? { ...i, storyPoints: points, estimated: true } : i);
     
     // Broadcast update
@@ -107,10 +108,10 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
 
     if (nextIssue) {
       setTimeout(() => {
-        (get() as any).setCurrentIssue(nextIssue.id);
+        get().setCurrentIssue(nextIssue.id);
       }, 100);
     } else {
-      (get() as any).setCurrentIssue(null);
+      get().setCurrentIssue(null);
     }
 
     set({ 
@@ -122,7 +123,7 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
   },
 
   updateIssueProgress: (id, progress) => {
-    const { issues, selectedBoard } = get() as any;
+    const { issues, selectedBoard } = get();
     const issueIndex = issues.findIndex((i: Issue) => i.id === id);
     if (issueIndex === -1) return;
 
@@ -209,7 +210,7 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
   },
 
   assignUser: (issueId, userId) => {
-    const { issues, selectedBoard, users } = get() as any;
+    const { issues, selectedBoard, users } = get();
     const user = users.find((u: User) => u.id === userId);
     if (!user) return;
 
@@ -237,7 +238,7 @@ export const createIssueSlice: StateCreator<any, [], [], IssueSlice> = (set, get
   },
 
   reorderIssues: (activeId, overId) => {
-    const { issues } = get() as any;
+    const { issues } = get();
     const oldIndex = issues.findIndex((i: Issue) => i.id === activeId);
     const newIndex = issues.findIndex((i: Issue) => i.id === overId);
     set({

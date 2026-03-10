@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import confetti from 'canvas-confetti';
 // Force UI sync
 import { useStore } from '../../store/useStore';
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors, DragStartEvent, DragEndEvent, useDroppable } from '@dnd-kit/core';
@@ -10,32 +9,9 @@ import { Issue } from '../../types';
 import { BacklogSidebar } from './BacklogSidebar';
 import { Swimlane, ProgressMarker } from './Swimlane';
 
-const playDropSound = () => {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioContext) {
-      const audioCtx = new AudioContext();
-      const playTone = (freq: number, startTime: number, duration: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-      const now = audioCtx.currentTime;
-      playTone(987.77, now, 0.1); // B5
-      playTone(1318.51, now + 0.1, 0.4); // E6
-    }
-  } catch (e) {
-    console.error('Audio play failed', e);
-  }
-};
+import { playDropSound } from '../../utils/audio';
+import { triggerSuccessConfetti } from '../../utils/effects';
+import { LoadingScreen } from '../common/LoadingScreen';
 
 export function StandupView() {
   const { issues, updateIssueStatus, updateIssueProgress, reorderIssues, isLoading } = useStore();
@@ -106,29 +82,7 @@ export function StandupView() {
           
           // Trigger confetti if completed
           if (step === 100) {
-            const end = Date.now() + 1.5 * 1000;
-            const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-            (function frame() {
-              confetti({
-                particleCount: 5,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 },
-                colors: colors
-              });
-              confetti({
-                particleCount: 5,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 },
-                colors: colors
-              });
-
-              if (Date.now() < end) {
-                requestAnimationFrame(frame);
-              }
-            }());
+            triggerSuccessConfetti();
           }
         }
       }
@@ -165,14 +119,7 @@ export function StandupView() {
     .filter((u): u is NonNullable<typeof u> => !!u);
 
   if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50/50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-          <p className="text-sm font-medium text-gray-500">Loading standup data...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading standup data..." />;
   }
 
   return (
