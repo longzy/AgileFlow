@@ -12,7 +12,7 @@ interface Props {
   currentUser: any;
 }
 
-function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean }) {
+function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { key?: string | number; card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: { card },
@@ -75,7 +75,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { card:
   );
 }
 
-function CardGroup({ parentCard, childCards, currentUser, onEdit }: { parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void }) {
+function CardGroup({ parentCard, childCards, currentUser, onEdit }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void }) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: parentCard.id,
     data: { card: parentCard },

@@ -86,48 +86,53 @@ export function RetroWritingStage({ room, currentUser }: Props) {
               </div>
               
               <div className="flex-1 overflow-y-auto space-y-3 pb-4 px-2">
-                {room.cards.filter(c => c.column === column).map(card => (
-                  <div key={card.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 group relative hover:shadow-md transition-shadow">
-                    {editingCardId === card.id ? (
-                      <div className="flex flex-col gap-3">
-                        <textarea
-                          value={editCardText}
-                          onChange={(e) => setEditCardText(e.target.value)}
-                          className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
-                          rows={3}
-                          autoFocus
-                        />
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
-                          <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
+                {room.cards.filter(c => c.column === column).map(card => {
+                  const author = room.users.find(u => u.id === card.authorId);
+                  const authorName = author ? author.name : "User";
+                  
+                  return (
+                    <div key={card.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 group relative hover:shadow-md transition-shadow">
+                      {editingCardId === card.id ? (
+                        <div className="flex flex-col gap-3">
+                          <textarea
+                            value={editCardText}
+                            onChange={(e) => setEditCardText(e.target.value)}
+                            className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
+                            <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
-                          <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed flex-1">{card.text}</p>
-                        </div>
-                        <div className="mt-4 flex items-center justify-between text-xs">
-                          <span className={`px-2.5 py-1 rounded-full font-medium ${colors.bg} ${colors.text}`}>
-                            {card.anonymous ? "Anonymous" : "User"}
-                          </span>
-                          {card.authorId === currentUser.id && (
-                            <button
-                              onClick={() => {
-                                setEditingCardId(card.id);
-                                setEditCardText(card.text);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
+                            <p className="text-gray-800 whitespace-pre-wrap text-sm leading-relaxed flex-1">{card.text}</p>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between text-[10px]">
+                            <span className={`px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
+                              {card.anonymous ? "Anonymous" : authorName}
+                            </span>
+                            {card.authorId === currentUser.id && (
+                              <button
+                                onClick={() => {
+                                  setEditingCardId(card.id);
+                                  setEditCardText(card.text);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="mt-2 px-2">

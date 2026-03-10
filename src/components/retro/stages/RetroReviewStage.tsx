@@ -29,7 +29,7 @@ const getColumnColor = (column: string) => {
   return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' };
 };
 
-function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }: { card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean; colors: any }) {
+function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }: { key?: string | number; card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean; colors?: any }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: { card },
@@ -91,7 +91,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }:
   );
 }
 
-function CardGroup({ parentCard, childCards, currentUser, onEdit, colors }: { parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void; colors: any }) {
+function CardGroup({ parentCard, childCards, currentUser, onEdit, colors }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void; colors?: any }) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: parentCard.id,
     data: { card: parentCard },

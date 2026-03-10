@@ -17,6 +17,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/common/ErrorFallback';
 import { Toaster, toast } from 'react-hot-toast';
 import { GroupSelector } from './components/common/GroupSelector';
+import { RetroHeaderUsers } from './components/retro/RetroHeaderUsers';
 
 export default function App() {
   const { fetchBoardData, isLoading, error, currentUser, selectedBoard, clearSelectedBoard, initSocket, logout } = useStore();
@@ -79,6 +80,7 @@ export default function App() {
           </h2>
           <div className="ml-auto flex items-center gap-2">
             {isStandup && <GroupSelector />}
+            {isRetro && <RetroHeaderUsers />}
             <button
               onClick={clearSelectedBoard}
               className="text-sm text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all cursor-pointer flex items-center gap-2"

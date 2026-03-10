@@ -89,6 +89,7 @@ export function TimelineWritingStage({ room, currentUser }: Props) {
                     <CardItem 
                       key={card.id} 
                       card={card} 
+                      room={room}
                       currentUser={currentUser}
                       editingCardId={editingCardId}
                       editCardText={editCardText}
@@ -133,6 +134,7 @@ export function TimelineWritingStage({ room, currentUser }: Props) {
                     <CardItem 
                       key={card.id} 
                       card={card} 
+                      room={room}
                       currentUser={currentUser}
                       editingCardId={editingCardId}
                       editCardText={editCardText}
@@ -202,7 +204,10 @@ export function TimelineWritingStage({ room, currentUser }: Props) {
   );
 }
 
-function CardItem({ card, currentUser, editingCardId, editCardText, setEditingCardId, setEditCardText, handleEditCard, sentiment }: any) {
+function CardItem({ card, room, currentUser, editingCardId, editCardText, setEditingCardId, setEditCardText, handleEditCard, sentiment }: any) {
+  const author = room.users.find((u: any) => u.id === card.authorId);
+  const authorName = author ? author.name : "User";
+
   return (
     <div className={cn(
       "w-full max-w-[140px] p-3 rounded-xl border shadow-sm group relative text-sm",
@@ -226,7 +231,7 @@ function CardItem({ card, currentUser, editingCardId, editCardText, setEditingCa
         <>
           <p className="text-gray-800 whitespace-pre-wrap line-clamp-3" title={card.text}>{card.text}</p>
           <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
-            <span>{card.anonymous ? "Anon" : "User"}</span>
+            <span>{card.anonymous ? "Anon" : authorName}</span>
             {card.authorId === currentUser.id && (
               <button
                 onClick={() => {

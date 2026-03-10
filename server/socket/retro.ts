@@ -56,6 +56,17 @@ export function setupRetroSocket(io: Server, socket: Socket) {
       return;
     }
 
+    let isNewUser = false;
+    // Persist user in room.users for action point assignment
+    if (!room.users) {
+      room.users = [];
+    }
+    if (!room.users.find(u => u.id === user.id)) {
+      room.users.push(user);
+      retroRepo.saveRoom(room);
+      isNewUser = true;
+    }
+
     // Track online user
     if (!roomSockets.has(roomId)) {
       roomSockets.set(roomId, new Set());
@@ -67,8 +78,12 @@ export function setupRetroSocket(io: Server, socket: Socket) {
     socket.data.userId = user.id;
     socket.data.roomId = roomId;
 
-    // Send current state to the user
-    socket.emit("retro:state", room);
+    // Send current state to the user (or broadcast if new user)
+    if (isNewUser) {
+      io.to(`retro:${roomId}`).emit("retro:state", room);
+    } else {
+      socket.emit("retro:state", room);
+    }
     
     // Broadcast online users
     broadcastRoomUsers(io, roomId);
@@ -90,7 +105,7 @@ export function setupRetroSocket(io: Server, socket: Socket) {
       cards: [],
       votes: {},
       actionPoints: [],
-      users: [], // We don't persist users anymore for online status
+      users: [user], // Persist creator in users list
     };
 
     retroRepo.saveRoom(newRoom);

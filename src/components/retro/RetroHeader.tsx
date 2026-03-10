@@ -1,8 +1,7 @@
 import { RetroRoom, RetroStage } from "@/shared/retro";
 import { useRetroStore } from "../../store/useRetroStore";
-import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Users, Trash2 } from "lucide-react";
+import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { UserListDrawer } from "./UserListDrawer";
 import { useConfirm } from "../../context/ConfirmContext";
 
 interface RetroHeaderProps {
@@ -19,7 +18,6 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   const [showTimerSettings, setShowTimerSettings] = useState(false);
   const [customMinutes, setCustomMinutes] = useState(5);
   const [copied, setCopied] = useState(false);
-  const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const { confirm } = useConfirm();
 
   const handleCopyRoomId = () => {
@@ -167,23 +165,6 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           </div>
         )}
 
-        <button
-          onClick={() => setIsUserDrawerOpen(true)}
-          className="flex items-center gap-1.5 bg-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-gray-600 font-medium text-xs sm:text-sm shrink-0"
-          title="View Users"
-        >
-          <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Users ({onlineUsers?.length || 0})</span>
-          <span className="sm:hidden">{onlineUsers?.length || 0}</span>
-        </button>
-
-        <UserListDrawer 
-          isOpen={isUserDrawerOpen} 
-          onClose={() => setIsUserDrawerOpen(false)} 
-          users={onlineUsers || []} 
-          hostId={room.hostId}
-        />
-
         {isHost && room.stage !== "DONE" && (
           <div className="flex items-center gap-2 relative shrink-0">
             {(room.stage === "WRITING" || room.stage === "VOTING") && !room.endTime && (
@@ -249,8 +230,20 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => {
-                // Export logic
-                const markdown = `# Retro Export\n\n${room.cards.map(c => `- [${c.column}] ${c.text}`).join('\n')}`;
+                const getUserName = (userId: string | undefined) => {
+                  if (!userId) return 'Unassigned';
+                  const user = room.users?.find(u => u.id === userId);
+                  return user ? user.name : 'Unknown User';
+                };
+
+                const markdown = `# Retro Export: ${room.template}
+Date: ${new Date().toLocaleDateString()}
+
+## Action Points
+${room.actionPoints.map(a => `- [${a.status === 'done' ? 'x' : ' '}] ${a.description} (Owner: ${getUserName(a.owner)}, Due: ${a.dueDate || 'None'})`).join('\n')}
+
+## Cards
+${room.cards.map(c => `- [${c.column}] ${c.text}`).join('\n')}`;
                 const blob = new Blob([markdown], { type: 'text/markdown' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');

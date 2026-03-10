@@ -52,9 +52,10 @@ export interface Card {
 }
 
 export interface Vote {
-  cardId: string;
+  cardId?: string;
   userId: string;
   timestamp: number;
+  points?: number;
 }
 
 export interface ActionItem {

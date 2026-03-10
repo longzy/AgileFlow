@@ -7,11 +7,17 @@ interface Props {
 
 export function RetroDoneStage({ room }: Props) {
   const handleExport = () => {
+    const getUserName = (userId: string | undefined) => {
+      if (!userId) return 'Unassigned';
+      const user = room.users?.find(u => u.id === userId);
+      return user ? user.name : 'Unknown User';
+    };
+
     const markdown = `# Retro Export: ${room.template}
 Date: ${new Date().toLocaleDateString()}
 
 ## Action Points
-${room.actionPoints.map(a => `- [${a.status === 'done' ? 'x' : ' '}] ${a.description} (Owner: ${a.owner || 'Unassigned'}, Due: ${a.dueDate || 'None'})`).join('\n')}
+${room.actionPoints.map(a => `- [${a.status === 'done' ? 'x' : ' '}] ${a.description} (Owner: ${getUserName(a.owner)}, Due: ${a.dueDate || 'None'})`).join('\n')}
 
 ## Cards
 ${room.cards.map(c => `- [${c.column}] ${c.text}`).join('\n')}

@@ -9,11 +9,20 @@ interface Props {
 }
 
 export function RetroActionStage({ room, isHost }: Props) {
-  const { updateAction } = useRetroStore();
+  const { updateAction, onlineUsers } = useRetroStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editOwnerId, setEditOwnerId] = useState("");
   const [editDate, setEditDate] = useState("");
+
+  // Combine room.users and onlineUsers to ensure we have a complete list
+  // even for rooms created before user persistence was added
+  const allUsers = [...(room.users || [])];
+  onlineUsers?.forEach(ou => {
+    if (!allUsers.find(u => u.id === ou.id)) {
+      allUsers.push(ou);
+    }
+  });
 
   const handleEdit = (action: any) => {
     if (!isHost) return;
@@ -40,7 +49,7 @@ export function RetroActionStage({ room, isHost }: Props) {
   };
 
   const getUserById = (userId: string) => {
-    return room.users?.find(u => u.id === userId);
+    return allUsers.find(u => u.id === userId);
   };
 
   return (
@@ -104,7 +113,7 @@ export function RetroActionStage({ room, isHost }: Props) {
                                 className="flex-1 outline-none text-sm bg-transparent appearance-none cursor-pointer"
                               >
                                 <option value="">Unassigned</option>
-                                {room.users?.map(user => (
+                                {allUsers.map(user => (
                                   <option key={user.id} value={user.id}>
                                     {user.name}
                                   </option>

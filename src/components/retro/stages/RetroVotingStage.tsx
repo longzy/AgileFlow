@@ -95,7 +95,7 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                   return (
                     <div 
                       key={card.id} 
-                      className={`rounded-2xl border transition-all ${
+                      className={`rounded-2xl border transition-all m-0.5 ${
                         hasVoted 
                           ? "bg-blue-50/50 border-blue-300 ring-2 ring-blue-500 shadow-md" 
                           : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-md shadow-sm"
@@ -108,8 +108,8 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                         </div>
                       )}
                       
-                      <div className="p-5">
-                        <div className="space-y-4">
+                      <div className="p-4">
+                        <div className="space-y-3">
                           {/* Parent Card */}
                           <div className="flex items-start gap-2">
                             {!isGroup && <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />}
@@ -124,21 +124,21 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                           ))}
                         </div>
                         
-                        <div className="mt-5 flex items-center justify-between pt-4 border-t border-gray-100">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${isGroup ? 'bg-gray-100 text-gray-600' : `${colors.bg} ${colors.text}`}`}>
+                        <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isGroup ? 'bg-gray-100 text-gray-600' : `${colors.bg} ${colors.text}`}`}>
                             {isGroup ? "Group Vote" : (card.anonymous ? "Anonymous" : "User")}
                           </span>
                           
                           <button
                             onClick={() => handleVote(card.id)}
                             disabled={!hasVoted && votesRemaining === 0}
-                            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all ${
+                            className={`flex items-center gap-1 px-3 py-1 rounded-xl text-xs font-medium transition-all ${
                               hasVoted 
                                 ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700" 
                                 : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                             }`}
                           >
-                            <ThumbsUp className={`w-4 h-4 ${hasVoted ? "fill-white" : ""}`} />
+                            <ThumbsUp className={`w-3.5 h-3.5 ${hasVoted ? "fill-white" : ""}`} />
                             <span>{voteCount > 0 ? voteCount : "Vote"}</span>
                           </button>
                         </div>

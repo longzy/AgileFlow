@@ -5,7 +5,7 @@ import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "@/shared/ret
 interface User {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
 }
 
 interface RetroState {

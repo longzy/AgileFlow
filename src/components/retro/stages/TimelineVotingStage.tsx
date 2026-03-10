@@ -56,7 +56,7 @@ export function TimelineVotingStage({ room, currentUser }: Props) {
       <div 
         key={card.id} 
         className={cn(
-          "w-full max-w-[160px] rounded-xl border transition-all text-sm shadow-sm",
+          "w-full max-w-[160px] rounded-xl border transition-all text-sm shadow-sm m-0.5",
           hasVoted 
             ? "bg-blue-50 border-blue-300 ring-2 ring-blue-500/20" 
             : isPositive ? "bg-emerald-50/50 border-emerald-100 hover:border-emerald-200" : "bg-rose-50/50 border-rose-100 hover:border-rose-200"

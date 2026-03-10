@@ -21,7 +21,7 @@ export interface RetroActionPoint {
 export interface RetroUser {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string;
 }
 
 export interface RetroRoom {
