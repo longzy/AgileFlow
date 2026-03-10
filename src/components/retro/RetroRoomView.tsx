@@ -9,6 +9,7 @@ import { RetroVotingStage } from "./stages/RetroVotingStage";
 import { RetroActionStage } from "./stages/RetroActionStage";
 import { RetroDoneStage } from "./stages/RetroDoneStage";
 import { RetroHeader } from "./RetroHeader";
+import { EmojiOverlay } from "./EmojiOverlay";
 
 export function RetroRoomView() {
   const { room, user } = useRetroStore();
@@ -26,7 +27,8 @@ export function RetroRoomView() {
   const isHost = room.hostId === currentUser.id;
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden w-full min-w-0">
+    <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden w-full min-w-0 relative">
+      <EmojiOverlay />
       <RetroHeader room={room} isHost={isHost} state={state} />
       
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-w-0">

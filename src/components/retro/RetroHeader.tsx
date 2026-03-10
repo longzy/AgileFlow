@@ -109,6 +109,9 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
     proceed();
   };
 
+  const { sendEmoji } = useRetroStore();
+  const emojis = ["👍", "🎉", "🔥", "❤️", "😂", "🚀"];
+
   return (
     <header className="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between shadow-sm z-10 gap-y-3 w-full min-w-0">
       <div className="flex flex-col gap-1 flex-1 min-w-0 mr-4">
@@ -134,6 +137,18 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 shadow-sm mr-2">
+          {emojis.map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => sendEmoji(emoji)}
+              className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-lg sm:text-xl hover:bg-gray-100 rounded-lg transition-transform active:scale-90"
+              title={`Send ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
         {timeLeft !== null && (
           <div className="flex items-center gap-1 sm:gap-2">
             <div className={`flex items-center gap-1.5 sm:gap-2 font-mono font-bold text-sm sm:text-lg px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl border ${room.timerPausedAt ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>

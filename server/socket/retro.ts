@@ -361,4 +361,10 @@ export function setupRetroSocket(io: Server, socket: Socket) {
     retroRepo.saveRoom(room);
     io.to(`retro:${roomId}`).emit("retro:state", room);
   });
+
+  // Send Emoji
+  socket.on("retro:emoji", ({ roomId, userId, emoji }: { roomId: string; userId: string; emoji: string }) => {
+    // Broadcast to everyone in the room, including the sender
+    io.to(`retro:${roomId}`).emit("retro:emoji", { emoji, userId });
+  });
 }

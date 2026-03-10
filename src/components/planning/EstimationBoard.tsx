@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 // Force UI sync
 import { useStore } from '../../store/useStore';
-import { Issue, Vote } from '../../types';
+import { Issue, Vote, User } from '../../types';
 import { Check, RotateCcw, Play, Crown } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import confetti from 'canvas-confetti';
@@ -10,6 +10,8 @@ const FIBONACCI = [1, 2, 3, 5, 8, 13, 21];
 
 export function EstimationBoard({ issue }: { issue: Issue }) {
   const { users, onlineUsers, currentUser, updateIssuePoints, votes, revealed, consensus, joinRoom, submitVote, revealVotes, resetVotes, hostId } = useStore();
+  const [revealAnimation, setRevealAnimation] = useState<'sync' | 'fight' | null>(null);
+  const [fightUsers, setFightUsers] = useState<{minUser: User, maxUser: User, minPoints: number, maxPoints: number} | null>(null);
 
   const isHost = currentUser?.id === hostId;
 
@@ -26,35 +28,65 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
 
   // Confetti effect when cards are revealed
   useEffect(() => {
-    if (revealed) {
-      const duration = 3 * 1000;
-      const end = Date.now() + duration;
+    if (revealed && votes.length > 0) {
+      const points = votes.map(v => v.points);
+      const maxPoints = Math.max(...points);
+      const minPoints = Math.min(...points);
+      
+      if (maxPoints === minPoints) {
+        setRevealAnimation('sync');
+        const duration = 3 * 1000;
+        const end = Date.now() + duration;
 
-      const frame = () => {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0, y: 0.8 },
-          colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
-          zIndex: 100
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1, y: 0.8 },
-          colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
-          zIndex: 100
-        });
+        const frame = () => {
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.8 },
+            colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
+            zIndex: 100
+          });
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.8 },
+            colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff'],
+            zIndex: 100
+          });
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+        frame();
+        
+        setTimeout(() => setRevealAnimation(null), 4000);
+      } else if (FIBONACCI.indexOf(maxPoints) - FIBONACCI.indexOf(minPoints) >= 3) {
+        setRevealAnimation('fight');
+        const minVote = votes.find(v => v.points === minPoints);
+        const maxVote = votes.find(v => v.points === maxPoints);
+        
+        const allUsers = [...onlineUsers];
+        if (currentUser && !allUsers.find(u => u.id === currentUser.id)) {
+          allUsers.push(currentUser);
         }
-      };
-      frame();
+        
+        const minUser = allUsers.find(u => u.id === minVote?.userId);
+        const maxUser = allUsers.find(u => u.id === maxVote?.userId);
+        
+        if (minUser && maxUser) {
+          setFightUsers({ minUser, maxUser, minPoints, maxPoints });
+        }
+        
+        setTimeout(() => setRevealAnimation(null), 6000);
+      }
+    } else {
+      setRevealAnimation(null);
+      setFightUsers(null);
     }
-  }, [revealed]);
+  }, [revealed, votes, onlineUsers, currentUser]);
 
   const handleVote = (points: number) => {
     if (revealed || !currentUser) return;
@@ -78,7 +110,58 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
   const allVoted = onlineUsers.length > 0 && votes.length === onlineUsers.length;
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-full">
+    <div className="max-w-4xl mx-auto flex flex-col h-full relative">
+      {/* Perfect Sync Animation */}
+      {revealAnimation === 'sync' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-sm animate-fade-in">
+          <div className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_0_30px_rgba(38,204,255,0.8)] animate-bounce">
+            Perfect Sync 🎯
+          </div>
+        </div>
+      )}
+
+      {/* Fight Animation */}
+      {revealAnimation === 'fight' && fightUsers && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="text-6xl md:text-8xl font-black text-red-500 drop-shadow-[0_0_30px_rgba(239,68,68,0.8)] mb-12 animate-pulse">
+            FIGHT! 🥊
+          </div>
+          <div className="flex items-center justify-center gap-16 md:gap-32 w-full px-8">
+            {/* Min User */}
+            <div className="flex flex-col items-center animate-slide-in-left">
+              <div className="relative">
+                <img src={fightUsers.minUser.avatar} alt={fightUsers.minUser.name} className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-blue-500 object-cover shadow-[0_0_40px_rgba(59,130,246,0.5)]" />
+                <div className="absolute -bottom-4 -right-4 bg-blue-500 text-white text-2xl md:text-4xl font-bold w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-black">
+                  {fightUsers.minPoints}
+                </div>
+              </div>
+              <div className="text-white text-2xl md:text-3xl font-bold mt-6">{fightUsers.minUser.name}</div>
+              <div className="text-blue-400 text-lg md:text-xl mt-2">Lowest Estimate</div>
+            </div>
+
+            {/* VS */}
+            <div className="text-5xl md:text-7xl font-black text-white italic drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
+              VS
+            </div>
+
+            {/* Max User */}
+            <div className="flex flex-col items-center animate-slide-in-right">
+              <div className="relative">
+                <img src={fightUsers.maxUser.avatar} alt={fightUsers.maxUser.name} className="w-32 h-32 md:w-48 md:h-48 rounded-full border-4 border-red-500 object-cover shadow-[0_0_40px_rgba(239,68,68,0.5)]" />
+                <div className="absolute -bottom-4 -left-4 bg-red-500 text-white text-2xl md:text-4xl font-bold w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center border-4 border-black">
+                  {fightUsers.maxPoints}
+                </div>
+              </div>
+              <div className="text-white text-2xl md:text-3xl font-bold mt-6">{fightUsers.maxUser.name}</div>
+              <div className="text-red-400 text-lg md:text-xl mt-2">Highest Estimate</div>
+            </div>
+          </div>
+          <div className="text-white/70 text-xl mt-16 animate-pulse">
+            Please discuss your estimates!
+          </div>
+        </div>
+      )}
+
       <div className="mb-8 p-6 rounded-2xl bg-white border border-gray-100 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <span className="px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-bold tracking-wider">
@@ -188,19 +271,36 @@ export function EstimationBoard({ issue }: { issue: Issue }) {
                   className="absolute flex flex-col items-center gap-3 transition-all duration-500"
                   style={{ transform: `translate(${x}px, ${y}px)` }}
                 >
-                  <div className={cn(
-                    "w-14 h-20 rounded-xl border-2 flex items-center justify-center bg-white shadow-lg transition-all duration-500",
-                    hasVoted && !revealed ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200",
-                    revealed && "bg-white border-gray-200",
-                    isCurrentUser && "ring-2 ring-blue-500 ring-offset-2"
-                  )}>
-                    {revealed && userVote ? (
-                      <span className="text-2xl font-bold text-gray-900">{userVote.points}</span>
-                    ) : hasVoted ? (
-                      <Check className="w-5 h-5 text-white" />
-                    ) : (
-                      <span className="text-gray-300">?</span>
-                    )}
+                  <div className="relative w-14 h-20 [perspective:1000px]">
+                    <div className={cn(
+                      "w-full h-full transition-transform duration-700 [transform-style:preserve-3d]",
+                      revealed ? "[transform:rotateY(180deg)]" : ""
+                    )}>
+                      {/* Front face (Unrevealed) */}
+                      <div className={cn(
+                        "absolute inset-0 [backface-visibility:hidden] rounded-xl border-2 flex items-center justify-center shadow-lg transition-colors duration-300",
+                        hasVoted ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 bg-white",
+                        isCurrentUser && "ring-2 ring-blue-500 ring-offset-2"
+                      )}>
+                        {hasVoted ? (
+                          <Check className="w-5 h-5 text-white" />
+                        ) : (
+                          <span className="text-gray-300">?</span>
+                        )}
+                      </div>
+                      
+                      {/* Back face (Revealed) */}
+                      <div className={cn(
+                        "absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl border-2 border-gray-200 bg-white flex items-center justify-center shadow-lg",
+                        isCurrentUser && "ring-2 ring-blue-500 ring-offset-2"
+                      )}>
+                        {userVote ? (
+                          <span className="text-2xl font-bold text-gray-900">{userVote.points}</span>
+                        ) : (
+                          <span className="text-gray-300">?</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className={cn(
                     "flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border shadow-sm relative",

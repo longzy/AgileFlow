@@ -26,6 +26,7 @@ interface RetroState {
   toggleTimer: () => void;
   mergeCards: (sourceCardId: string, targetCardId: string) => void;
   deleteRoom: () => void;
+  sendEmoji: (emoji: string) => void;
 }
 
 export const useRetroStore = create<RetroState>((set, get) => ({
@@ -73,6 +74,12 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     socket.on("retro:deleted", () => {
       set({ room: null, error: "Room has been deleted by host" });
       window.location.href = "/retro";
+    });
+
+    socket.on("retro:emoji", ({ emoji, userId }: { emoji: string, userId: string }) => {
+      // Dispatch a custom event that the UI can listen to
+      const event = new CustomEvent('retro-emoji', { detail: { emoji, userId } });
+      window.dispatchEvent(event);
     });
 
     set({ socket, user });
@@ -153,6 +160,13 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     const { socket, room, user } = get();
     if (socket && room && user) {
       socket.emit("retro:merge_cards", { roomId: room.id, userId: user.id, sourceCardId, targetCardId });
+    }
+  },
+
+  sendEmoji: (emoji: string) => {
+    const { socket, room, user } = get();
+    if (socket && room && user) {
+      socket.emit("retro:emoji", { roomId: room.id, userId: user.id, emoji });
     }
   },
 }));
