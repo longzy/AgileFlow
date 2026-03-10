@@ -96,13 +96,18 @@ export function RetroActionStage({ room, isHost }: Props) {
                   <div className="flex-1 min-w-0">
                     {editingId === action.id ? (
                       <div className="space-y-4">
-                        <textarea
-                          value={editDesc}
-                          onChange={(e) => setEditDesc(e.target.value)}
-                          className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
-                          rows={2}
-                          autoFocus
-                        />
+                        <div className="relative">
+                          <textarea
+                            value={editDesc}
+                            onChange={(e) => setEditDesc(e.target.value.slice(0, 200))}
+                            className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                            rows={2}
+                            autoFocus
+                          />
+                          <div className="absolute bottom-2 right-2 text-[10px] text-gray-400">
+                            {editDesc.length}/200
+                          </div>
+                        </div>
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1 relative">
                             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 w-full focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">

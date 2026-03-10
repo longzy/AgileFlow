@@ -1,11 +1,11 @@
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroCard, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
 import { ThumbsUp, Layers } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
 export function TimelineVotingStage({ room, currentUser }: Props) {
@@ -51,6 +51,8 @@ export function TimelineVotingStage({ room, currentUser }: Props) {
     const voteCount = getVoteCount(card.id);
     const isGroup = children.length > 0;
     const isPositive = card.column.endsWith("positive");
+    const author = room.users.find(u => u.id === card.authorId);
+    const authorName = author ? author.name : "User";
     
     return (
       <div 
@@ -84,7 +86,7 @@ export function TimelineVotingStage({ room, currentUser }: Props) {
           
           <div className="mt-3 flex items-center justify-between pt-2 border-t border-gray-200/50">
             <span className="text-[10px] text-gray-400">
-              {isGroup ? "Group" : (card.anonymous ? "Anon" : "User")}
+              {isGroup ? "Group" : (card.anonymous ? "Anon" : authorName)}
             </span>
             
             <button

@@ -1,11 +1,11 @@
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroCard, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
 import { ThumbsUp, Layers } from "lucide-react";
 import { TimelineVotingStage } from "./TimelineVotingStage";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
 const TEMPLATE_COLUMNS: Record<string, string[]> = {
@@ -91,6 +91,8 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                   const hasVoted = userVotes.includes(card.id);
                   const voteCount = getVoteCount(card.id);
                   const isGroup = children.length > 0;
+                  const author = room.users.find(u => u.id === card.authorId);
+                  const authorName = author ? author.name : "User";
                   
                   return (
                     <div 
@@ -102,7 +104,7 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                       }`}
                     >
                       {isGroup && (
-                        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 text-xs font-bold text-gray-500 bg-gray-50/80 rounded-t-2xl uppercase tracking-wider">
+                        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 text-[10px] font-bold text-gray-500 bg-gray-50/80 rounded-t-2xl uppercase tracking-wider">
                           <Layers className="w-3.5 h-3.5" />
                           Group ({children.length + 1} cards)
                         </div>
@@ -126,7 +128,7 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                         
                         <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${isGroup ? 'bg-gray-100 text-gray-600' : `${colors.bg} ${colors.text}`}`}>
-                            {isGroup ? "Group Vote" : (card.anonymous ? "Anonymous" : "User")}
+                            {isGroup ? "Group Vote" : (card.anonymous ? "Anonymous" : authorName)}
                           </span>
                           
                           <button

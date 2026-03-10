@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
-import { Plus, Edit2, Check, EyeOff } from "lucide-react";
+import { Plus, Edit2, EyeOff } from "lucide-react";
 import { TimelineWritingStage } from "./TimelineWritingStage";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
 const TEMPLATE_COLUMNS: Record<string, string[]> = {
@@ -86,6 +86,11 @@ export function RetroWritingStage({ room, currentUser }: Props) {
               </div>
               
               <div className="flex-1 overflow-y-auto space-y-3 pb-4 px-2">
+                {room.cards.filter(c => c.column === column).length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400">
+                    <p className="text-xs">No cards yet</p>
+                  </div>
+                )}
                 {room.cards.filter(c => c.column === column).map(card => {
                   const author = room.users.find(u => u.id === card.authorId);
                   const authorName = author ? author.name : "User";
@@ -93,15 +98,20 @@ export function RetroWritingStage({ room, currentUser }: Props) {
                   return (
                     <div key={card.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 group relative hover:shadow-md transition-shadow">
                       {editingCardId === card.id ? (
-                        <div className="flex flex-col gap-3">
-                          <textarea
-                            value={editCardText}
-                            onChange={(e) => setEditCardText(e.target.value)}
-                            className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
-                            rows={3}
-                            autoFocus
-                          />
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-col gap-3">
+                            <div className="relative">
+                              <textarea
+                                value={editCardText}
+                                onChange={(e) => setEditCardText(e.target.value.slice(0, 200))}
+                                className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="absolute bottom-2 right-2 text-[10px] text-gray-400">
+                                {editCardText.length}/200
+                              </div>
+                            </div>
+                            <div className="flex justify-end gap-2">
                             <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
                             <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
                           </div>
@@ -140,11 +150,14 @@ export function RetroWritingStage({ room, currentUser }: Props) {
                   <input
                     type="text"
                     value={newCardText[column] || ""}
-                    onChange={(e) => setNewCardText(prev => ({ ...prev, [column]: e.target.value }))}
+                    onChange={(e) => setNewCardText(prev => ({ ...prev, [column]: e.target.value.slice(0, 200) }))}
                     onKeyDown={(e) => e.key === "Enter" && handleAddCard(column)}
                     placeholder={`Add to ${column}...`}
-                    className="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-shadow text-sm"
+                    className="w-full pl-4 pr-20 py-3 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm transition-shadow text-sm"
                   />
+                  <div className="absolute right-12 top-1/2 -translate-y-1/2 text-[10px] text-gray-400">
+                    {(newCardText[column] || "").length}/200
+                  </div>
                   <button
                     onClick={() => handleAddCard(column)}
                     disabled={!newCardText[column]?.trim()}

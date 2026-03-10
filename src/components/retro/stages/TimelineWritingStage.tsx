@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
-import { Plus, Edit2, Check, EyeOff, Smile, Frown } from "lucide-react";
+import { Plus, Edit2, EyeOff, Smile, Frown } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
 export function TimelineWritingStage({ room, currentUser }: Props) {
@@ -170,14 +170,19 @@ export function TimelineWritingStage({ room, currentUser }: Props) {
               </div>
             </div>
             
-            <textarea
-              value={newCardText}
-              onChange={(e) => setNewCardText(e.target.value)}
-              placeholder="What happened on this day?"
-              className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none mb-4"
-              rows={4}
-              autoFocus
-            />
+            <div className="relative">
+              <textarea
+                value={newCardText}
+                onChange={(e) => setNewCardText(e.target.value.slice(0, 200))}
+                placeholder="What happened on this day?"
+                className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none mb-4"
+                rows={4}
+                autoFocus
+              />
+              <div className="absolute bottom-6 right-4 text-[10px] text-gray-400">
+                {newCardText.length}/200
+              </div>
+            </div>
             
             <div className="flex justify-end gap-3">
               <button 
@@ -204,7 +209,20 @@ export function TimelineWritingStage({ room, currentUser }: Props) {
   );
 }
 
-function CardItem({ card, room, currentUser, editingCardId, editCardText, setEditingCardId, setEditCardText, handleEditCard, sentiment }: any) {
+interface CardItemProps {
+  key?: string;
+  card: any;
+  room: RetroRoom;
+  currentUser: RetroUser;
+  editingCardId: string | null;
+  editCardText: string;
+  setEditingCardId: (id: string | null) => void;
+  setEditCardText: (text: string) => void;
+  handleEditCard: (id: string) => void;
+  sentiment: "positive" | "negative";
+}
+
+function CardItem({ card, room, currentUser, editingCardId, editCardText, setEditingCardId, setEditCardText, handleEditCard, sentiment }: CardItemProps) {
   const author = room.users.find((u: any) => u.id === card.authorId);
   const authorName = author ? author.name : "User";
 
@@ -215,13 +233,18 @@ function CardItem({ card, room, currentUser, editingCardId, editCardText, setEdi
     )}>
       {editingCardId === card.id ? (
         <div className="flex flex-col gap-2">
-          <textarea
-            value={editCardText}
-            onChange={(e) => setEditCardText(e.target.value)}
-            className="w-full p-1.5 text-xs border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 outline-none resize-none"
-            rows={3}
-            autoFocus
-          />
+          <div className="relative">
+            <textarea
+              value={editCardText}
+              onChange={(e) => setEditCardText(e.target.value.slice(0, 200))}
+              className="w-full p-1.5 text-xs border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+              rows={3}
+              autoFocus
+            />
+            <div className="absolute bottom-1 right-1 text-[8px] text-gray-400">
+              {editCardText.length}/200
+            </div>
+          </div>
           <div className="flex justify-end gap-1">
             <button onClick={() => setEditingCardId(null)} className="text-[10px] text-gray-500 hover:text-gray-700">Cancel</button>
             <button onClick={() => handleEditCard(card.id)} className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700">Save</button>

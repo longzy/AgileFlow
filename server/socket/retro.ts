@@ -4,7 +4,7 @@ import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../shared
 import crypto from "crypto";
 
 // Run cleanup on startup
-// retroRepo.cleanup();
+retroRepo.cleanup();
 
 interface User {
   id: string;

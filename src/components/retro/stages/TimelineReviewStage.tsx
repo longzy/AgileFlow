@@ -1,4 +1,4 @@
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroCard, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
 import { Edit2, GripVertical, Layers } from "lucide-react";
 import { useState } from "react";
@@ -9,10 +9,13 @@ import { cn } from "../../../utils/cn";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
-function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { key?: string | number; card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean }) {
+function DraggableCard({ card, room, currentUser, onEdit, isOverlay = false }: { key?: string | number; card: RetroCard; room: RetroRoom; currentUser: RetroUser; onEdit: (id: string, text: string) => void; isOverlay?: boolean }) {
+  const author = room.users.find(u => u.id === card.authorId);
+  const authorName = author ? author.name : "User";
+  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: { card },
@@ -54,7 +57,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { key?:
           <div className="flex-1 min-w-0">
             <p className="text-gray-800 whitespace-pre-wrap break-words line-clamp-3" title={card.text}>{card.text}</p>
             <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
-              <span>{card.anonymous ? "Anon" : "User"}</span>
+              <span>{card.anonymous ? "Anon" : authorName}</span>
               {card.authorId === currentUser.id && (
                 <button
                   onClick={(e) => {
@@ -75,7 +78,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false }: { key?:
   );
 }
 
-function CardGroup({ parentCard, childCards, currentUser, onEdit }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void }) {
+function CardGroup({ parentCard, childCards, room, currentUser, onEdit }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; room: RetroRoom; currentUser: RetroUser; onEdit: (id: string, text: string) => void }) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: parentCard.id,
     data: { card: parentCard },
@@ -97,10 +100,10 @@ function CardGroup({ parentCard, childCards, currentUser, onEdit }: { key?: stri
         Group ({childCards.length + 1})
       </div>
       <div className="space-y-1.5 flex flex-col items-center">
-        <DraggableCard card={parentCard} currentUser={currentUser} onEdit={onEdit} />
+        <DraggableCard card={parentCard} room={room} currentUser={currentUser} onEdit={onEdit} />
         {childCards.map(child => (
           <div key={child.id} className="relative w-full flex justify-center">
-             <DraggableCard card={child} currentUser={currentUser} onEdit={onEdit} />
+             <DraggableCard card={child} room={room} currentUser={currentUser} onEdit={onEdit} />
           </div>
         ))}
       </div>
@@ -169,13 +172,18 @@ export function TimelineReviewStage({ room, currentUser }: Props) {
     if (editingCardId === card.id) {
       return (
         <div key={card.id} className="bg-white p-2 rounded-xl border border-blue-500 shadow-sm w-full max-w-[140px]">
-          <textarea
-            value={editCardText}
-            onChange={(e) => setEditCardText(e.target.value)}
-            className="w-full p-1.5 text-xs border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 outline-none resize-none"
-            rows={3}
-            autoFocus
-          />
+          <div className="relative">
+            <textarea
+              value={editCardText}
+              onChange={(e) => setEditCardText(e.target.value.slice(0, 200))}
+              className="w-full p-1.5 text-xs border border-blue-300 rounded focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+              rows={3}
+              autoFocus
+            />
+            <div className="absolute bottom-1 right-1 text-[8px] text-gray-400">
+              {editCardText.length}/200
+            </div>
+          </div>
           <div className="flex justify-end gap-1 mt-1">
             <button onClick={() => setEditingCardId(null)} className="text-[10px] text-gray-500 hover:text-gray-700">Cancel</button>
             <button onClick={() => handleEditCard(card.id)} className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded hover:bg-blue-700">Save</button>
@@ -190,6 +198,7 @@ export function TimelineReviewStage({ room, currentUser }: Props) {
           key={card.id} 
           parentCard={card} 
           childCards={children} 
+          room={room}
           currentUser={currentUser} 
           onEdit={onEditStart} 
         />
@@ -200,6 +209,7 @@ export function TimelineReviewStage({ room, currentUser }: Props) {
       <DraggableCard 
         key={card.id} 
         card={card} 
+        room={room}
         currentUser={currentUser} 
         onEdit={onEditStart} 
       />
@@ -283,6 +293,7 @@ export function TimelineReviewStage({ room, currentUser }: Props) {
         {activeCard ? (
           <DraggableCard 
             card={activeCard} 
+            room={room}
             currentUser={currentUser} 
             onEdit={() => {}} 
             isOverlay 

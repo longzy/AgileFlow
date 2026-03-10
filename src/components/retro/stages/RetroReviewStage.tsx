@@ -1,4 +1,4 @@
-import { RetroRoom, RetroCard } from "@/shared/retro";
+import { RetroRoom, RetroCard, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
 import { Edit2, GripVertical, Layers } from "lucide-react";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { TimelineReviewStage } from "./TimelineReviewStage";
 
 interface Props {
   room: RetroRoom;
-  currentUser: any;
+  currentUser: RetroUser;
 }
 
 const TEMPLATE_COLUMNS: Record<string, string[]> = {
@@ -29,7 +29,10 @@ const getColumnColor = (column: string) => {
   return { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500', border: 'border-blue-200' };
 };
 
-function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }: { key?: string | number; card: RetroCard; currentUser: any; onEdit: (id: string, text: string) => void; isOverlay?: boolean; colors?: any }) {
+function DraggableCard({ card, room, currentUser, onEdit, isOverlay = false, colors }: { key?: string | number; card: RetroCard; room: RetroRoom; currentUser: RetroUser; onEdit: (id: string, text: string) => void; isOverlay?: boolean; colors?: any }) {
+  const author = room.users.find(u => u.id === card.authorId);
+  const authorName = author ? author.name : "User";
+  
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
     data: { card },
@@ -56,7 +59,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }:
         style={style}
         {...listeners}
         {...attributes}
-        className={`bg-white p-5 rounded-2xl border ${isOverlay ? 'border-blue-500 shadow-xl' : 'border-gray-100 shadow-sm'} group relative touch-none hover:shadow-md transition-shadow`}
+        className={`bg-white p-4 rounded-2xl border ${isOverlay ? 'border-blue-500 shadow-xl' : 'border-gray-100 shadow-sm'} group relative touch-none hover:shadow-md transition-shadow`}
       >
         <div className="flex items-start gap-3">
           <div className="mt-1 text-gray-300 cursor-grab active:cursor-grabbing hover:text-gray-500 transition-colors">
@@ -67,9 +70,9 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }:
               <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
               <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
             </div>
-            <div className="mt-4 flex items-center justify-between text-xs">
-              <span className={`px-2.5 py-1 rounded-full font-medium ${colors.bg} ${colors.text}`}>
-                {card.anonymous ? "Anonymous" : "User"}
+            <div className="mt-3 flex items-center justify-between text-[10px]">
+              <span className={`px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
+                {card.anonymous ? "Anonymous" : authorName}
               </span>
               {card.authorId === currentUser.id && (
                 <button
@@ -91,7 +94,7 @@ function DraggableCard({ card, currentUser, onEdit, isOverlay = false, colors }:
   );
 }
 
-function CardGroup({ parentCard, childCards, currentUser, onEdit, colors }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; currentUser: any; onEdit: (id: string, text: string) => void; colors?: any }) {
+function CardGroup({ parentCard, childCards, room, currentUser, onEdit, colors }: { key?: string | number; parentCard: RetroCard; childCards: RetroCard[]; room: RetroRoom; currentUser: RetroUser; onEdit: (id: string, text: string) => void; colors?: any }) {
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: parentCard.id,
     data: { card: parentCard },
@@ -107,12 +110,12 @@ function CardGroup({ parentCard, childCards, currentUser, onEdit, colors }: { ke
         Group ({childCards.length + 1} cards)
       </div>
       <div className="space-y-3">
-        <DraggableCard card={parentCard} currentUser={currentUser} onEdit={onEdit} colors={colors} />
+        <DraggableCard card={parentCard} room={room} currentUser={currentUser} onEdit={onEdit} colors={colors} />
         {childCards.map(child => (
           <div key={child.id} className="pl-6 relative">
              <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-px bg-gray-300"></div>
              <div className="absolute left-3 top-0 bottom-1/2 w-px bg-gray-300"></div>
-             <DraggableCard card={child} currentUser={currentUser} onEdit={onEdit} colors={colors} />
+             <DraggableCard card={child} room={room} currentUser={currentUser} onEdit={onEdit} colors={colors} />
           </div>
         ))}
       </div>
@@ -216,14 +219,19 @@ export function RetroReviewStage({ room, currentUser }: Props) {
                     
                     if (editingCardId === card.id) {
                       return (
-                        <div key={card.id} className="bg-white p-5 rounded-2xl border border-blue-500 shadow-sm">
-                          <textarea
-                            value={editCardText}
-                            onChange={(e) => setEditCardText(e.target.value)}
-                            className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
-                            rows={3}
-                            autoFocus
-                          />
+                        <div key={card.id} className="bg-white p-4 rounded-2xl border border-blue-500 shadow-sm">
+                          <div className="relative">
+                            <textarea
+                              value={editCardText}
+                              onChange={(e) => setEditCardText(e.target.value.slice(0, 200))}
+                              className="w-full p-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm"
+                              rows={3}
+                              autoFocus
+                            />
+                            <div className="absolute bottom-2 right-2 text-[10px] text-gray-400">
+                              {editCardText.length}/200
+                            </div>
+                          </div>
                           <div className="flex justify-end gap-2 mt-3">
                             <button onClick={() => setEditingCardId(null)} className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">Cancel</button>
                             <button onClick={() => handleEditCard(card.id)} className="text-xs font-medium bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Save</button>
@@ -238,6 +246,7 @@ export function RetroReviewStage({ room, currentUser }: Props) {
                           key={card.id} 
                           parentCard={card} 
                           childCards={children} 
+                          room={room}
                           currentUser={currentUser} 
                           onEdit={onEditStart}
                           colors={colors}
@@ -249,6 +258,7 @@ export function RetroReviewStage({ room, currentUser }: Props) {
                       <DraggableCard 
                         key={card.id} 
                         card={card} 
+                        room={room}
                         currentUser={currentUser} 
                         onEdit={onEditStart}
                         colors={colors}
@@ -266,6 +276,7 @@ export function RetroReviewStage({ room, currentUser }: Props) {
         {activeCard ? (
           <DraggableCard 
             card={activeCard} 
+            room={room}
             currentUser={currentUser} 
             onEdit={() => {}} 
             isOverlay
