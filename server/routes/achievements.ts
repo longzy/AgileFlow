@@ -6,6 +6,15 @@ import { Server } from "socket.io";
 export default function achievementRoutes(io: Server) {
   const router = Router();
   const DATA_PATH = path.join(process.cwd(), "data", "achievements.json");
+  
+  // Simple lock to prevent concurrent writes
+  let writeQueue = Promise.resolve();
+  const safeWrite = async (data: any) => {
+    writeQueue = writeQueue.then(async () => {
+      await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2));
+    });
+    return writeQueue;
+  };
 
   const getPersonalTemplates = () => [
     {
@@ -90,42 +99,63 @@ export default function achievementRoutes(io: Server) {
       const group = req.query.group as string || "default";
       const userId = req.query.userId as string;
       
-      const data = await fs.readFile(DATA_PATH, "utf-8");
+      let data = "{}";
+      try {
+        data = await fs.readFile(DATA_PATH, "utf-8");
+      } catch (e) {
+        // If file doesn't exist, start with empty object
+        await safeWrite({});
+      }
+      
+      if (!data || data.trim() === "") data = "{}";
       let allData = JSON.parse(data);
+      let changed = false;
       
       // Migration: If it's an array or old group format (array per group)
       if (Array.isArray(allData)) {
         allData = { [group]: { team: allData.filter((a: any) => a.scope === 'team'), personal: {} } };
-        await fs.writeFile(DATA_PATH, JSON.stringify(allData, null, 2));
+        changed = true;
       } else if (allData[group] && Array.isArray(allData[group])) {
         allData[group] = { 
           team: allData[group].filter((a: any) => a.scope === 'team'), 
           personal: {} 
         };
-        await fs.writeFile(DATA_PATH, JSON.stringify(allData, null, 2));
+        changed = true;
       }
 
       if (!allData[group]) {
         allData[group] = { team: getTeamTemplates(), personal: {} };
-        await fs.writeFile(DATA_PATH, JSON.stringify(allData, null, 2));
+        changed = true;
       }
 
       const groupData = allData[group];
+      if (!groupData.personal) {
+        groupData.personal = {};
+        changed = true;
+      }
+
       const teamAchievements = groupData.team || [];
       
       let userPersonal = [];
       if (userId) {
         if (!groupData.personal[userId]) {
           groupData.personal[userId] = getPersonalTemplates();
-          await fs.writeFile(DATA_PATH, JSON.stringify(allData, null, 2));
+          changed = true;
         }
         userPersonal = groupData.personal[userId];
       }
       
+      if (changed) {
+        await safeWrite(allData);
+      }
+      
       res.json([...teamAchievements, ...userPersonal]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error reading achievements:", error);
-      res.status(500).json({ error: "Failed to load achievements" });
+      res.status(500).json({ 
+        error: "Failed to load achievements", 
+        details: error.message
+      });
     }
   });
 
@@ -142,6 +172,7 @@ export default function achievementRoutes(io: Server) {
       const groupData = allData[group];
       
       if (!groupData) return res.status(404).json({ error: "Group not found" });
+      if (!groupData.personal) groupData.personal = {};
 
       // Search in team first
       let achievement = groupData.team.find((a: any) => a.id === id);
@@ -165,13 +196,13 @@ export default function achievementRoutes(io: Server) {
           io.emit("achievement_unlocked", { ...achievement, group, userId: isPersonal ? userId : undefined });
         }
         
-        await fs.writeFile(DATA_PATH, JSON.stringify(allData, null, 2));
+        await safeWrite(allData);
         res.json(achievement);
       } else {
         res.status(404).json({ error: "Achievement not found" });
       }
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update achievement" });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to update achievement", details: error.message });
     }
   });
 

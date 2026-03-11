@@ -55,12 +55,14 @@ export const AchievementWall: React.FC = () => {
             每一枚勋章都见证了我们向更高效、更紧密协作迈进的步伐。
           </p>
           <div className="flex items-center gap-4 mt-4">
-            <button 
-              onClick={testAchievement}
-              className="px-4 py-2 bg-amber-100 text-amber-700 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-200 transition-colors border border-amber-200"
-            >
-              🚀 模拟达成成就 (测试特效)
-            </button>
+            {import.meta.env.DEV && (
+              <button 
+                onClick={testAchievement}
+                className="px-4 py-2 bg-amber-100 text-amber-700 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-200 transition-colors border border-amber-200"
+              >
+                🚀 模拟达成成就 (测试特效)
+              </button>
+            )}
           </div>
         </div>
 
