@@ -7,6 +7,7 @@ import { config } from "./server/config";
 import { setupProxy } from "./server/utils/proxy";
 import { setupSocket } from "./server/socket";
 import jiraRoutes from "./server/routes/jira";
+import achievementRoutes from "./server/routes/achievements";
 
 // Setup Proxy
 setupProxy();
@@ -17,8 +18,11 @@ async function startServer() {
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"]
-    }
+      methods: ["GET", "POST"],
+      credentials: true
+    },
+    allowEIO3: true,
+    transports: ["polling", "websocket"]
   });
 
   app.use(express.json());
@@ -28,6 +32,7 @@ async function startServer() {
 
   // API Routes
   app.use("/api/jira", jiraRoutes);
+  app.use("/api/achievements", achievementRoutes(io));
 
   // Vite middleware for development
   if (config.NODE_ENV !== "production") {

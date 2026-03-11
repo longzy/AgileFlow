@@ -4,8 +4,9 @@ import { AuthSlice, createAuthSlice } from './slices/authSlice';
 import { BoardSlice, createBoardSlice } from './slices/boardSlice';
 import { IssueSlice, createIssueSlice } from './slices/issueSlice';
 import { PlanningSlice, createPlanningSlice } from './slices/planningSlice';
+import { AchievementSlice, createAchievementSlice } from './slices/achievementSlice';
 
-export type AppState = AuthSlice & BoardSlice & IssueSlice & PlanningSlice & {
+export type AppState = AuthSlice & BoardSlice & IssueSlice & PlanningSlice & AchievementSlice & {
   isLoading: boolean;
   error: string | null;
 };
@@ -17,6 +18,7 @@ export const useStore = create<AppState>()(
       ...createBoardSlice(set, get, api),
       ...createIssueSlice(set, get, api),
       ...createPlanningSlice(set, get, api),
+      ...createAchievementSlice(set, get, api),
       isLoading: false,
       error: null,
     }),

@@ -9,6 +9,8 @@ import { Sidebar } from './components/layout/Sidebar';
 import { PlanningView } from './components/planning/PlanningView';
 import { StandupView } from './components/standup/StandupView';
 import { RetroView } from './components/retro/RetroView';
+import { AchievementWall } from './components/achievements/AchievementWall';
+import { AchievementCelebration } from './components/achievements/AchievementCelebration';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { BoardSelectionScreen } from './components/auth/BoardSelectionScreen';
 import { useStore } from './store/useStore';
@@ -58,6 +60,7 @@ export default function App() {
   const isStandup = location.pathname === '/standup';
   const isRetro = location.pathname.startsWith('/retro');
   const isPlanning = location.pathname === '/planning';
+  const isAchievements = location.pathname === '/achievements';
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
@@ -73,10 +76,10 @@ export default function App() {
 
       <Sidebar />
       
-      <main className="flex-1 flex flex-col relative z-10 bg-white min-w-0">
+      <main className="flex-1 flex flex-col relative z-10 bg-white min-w-0 overflow-y-auto">
         <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100 shrink-0">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {isStandup ? 'Standup' : isRetro ? 'Retro' : 'Planning'}
+            {isStandup ? '每日站会' : isRetro ? '回顾会议' : isPlanning ? '冲刺计划' : isAchievements ? 'Hall of Fame' : 'Agile Studio'}
           </h2>
           <div className="ml-auto flex items-center gap-2">
             {isStandup && <GroupSelector />}
@@ -103,8 +106,11 @@ export default function App() {
           <Route path="/standup" element={<StandupView />} />
           <Route path="/retro" element={<RetroView />} />
           <Route path="/retro/:roomId" element={<RetroView />} />
+          <Route path="/achievements" element={<AchievementWall />} />
           <Route path="*" element={<Navigate to="/planning" replace />} />
         </Routes>
+
+        <AchievementCelebration />
       </main>
     </div>
     </ErrorBoundary>

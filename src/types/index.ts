@@ -110,3 +110,17 @@ export interface ClientToServerEvents {
   "action:add": (payload: { roomId: string; action: Omit<ActionItem, "id"> }) => void;
   "action:update": (payload: { roomId: string; actionId: string; updates: Partial<ActionItem> }) => void;
 }
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  level: 'gold' | 'silver' | 'bronze';
+  icon: string;
+  achieved: boolean;
+  achievedDate?: string;
+  progress?: number;
+  target?: number;
+  category: 'delivery' | 'quality' | 'culture';
+  scope: 'personal' | 'team';
+}

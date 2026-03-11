@@ -1,4 +1,4 @@
-import { Calendar, LayoutDashboard, Layers, Settings, MessageSquare } from 'lucide-react';
+import { Calendar, LayoutDashboard, Layers, Settings, MessageSquare, Trophy } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
@@ -63,6 +63,18 @@ export function Sidebar() {
         >
           <MessageSquare className="w-5 h-5" />
           <span>Retro</span>
+        </NavLink>
+        <NavLink
+          to="/achievements"
+          className={({ isActive }) => cn(
+            "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+            isActive 
+              ? "bg-gray-900 text-white shadow-lg shadow-gray-900/10" 
+              : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
+          )}
+        >
+          <Trophy className="w-5 h-5" />
+          <span>Hall of Fame</span>
         </NavLink>
       </nav>
 
