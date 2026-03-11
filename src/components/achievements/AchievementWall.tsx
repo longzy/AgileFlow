@@ -48,7 +48,7 @@ export const AchievementWall: React.FC = () => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
             <Trophy className="w-8 h-8" />
-            <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900">团队名人堂</h1>
+            <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900">成就勋章墙</h1>
           </div>
           <p className="text-gray-500 font-medium max-w-xl">
             记录团队的每一个里程碑与卓越时刻。
