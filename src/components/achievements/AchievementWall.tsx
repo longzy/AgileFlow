@@ -7,7 +7,7 @@ import { cn } from '../../utils/cn';
 import { GroupSelector } from '../common/GroupSelector';
 
 export const AchievementWall: React.FC = () => {
-  const { achievements, fetchAchievements, selectedGroup, currentUser } = useStore();
+  const { achievements, fetchAchievements, selectedGroup, currentUser, issues, sprint } = useStore();
   const [activeScope, setActiveScope] = React.useState<'all' | 'personal' | 'team'>('all');
 
   useEffect(() => {
@@ -20,6 +20,30 @@ export const AchievementWall: React.FC = () => {
 
   const achievedCount = filteredAchievements.filter(a => a.achieved).length;
   const totalCount = filteredAchievements.length;
+
+  const evaluateAchievements = async () => {
+    if (!sprint) {
+      alert("当前没有活跃的 Sprint，无法结算。");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/achievements/evaluate?group=${encodeURIComponent(selectedGroup)}&userId=${currentUser?.id || ''}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issues, sprint })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.unlocked && data.unlocked.length > 0) {
+          fetchAchievements();
+        } else {
+          alert("本期结算完成，暂无新成就解锁。");
+        }
+      }
+    } catch (error) {
+      console.error("Evaluation failed:", error);
+    }
+  };
 
   const testAchievement = async () => {
     const unachieved = achievements.find(a => !a.achieved);
@@ -47,14 +71,20 @@ export const AchievementWall: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
-            <Trophy className="w-8 h-8" />
-            <h1 className="text-4xl font-black uppercase tracking-tight text-gray-900">成就勋章墙</h1>
+            <Trophy className="w-6 h-6" />
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">成就勋章墙</h1>
           </div>
           <p className="text-gray-500 font-medium max-w-xl">
             记录团队的每一个里程碑与卓越时刻。
             每一枚勋章都见证了我们向更高效、更紧密协作迈进的步伐。
           </p>
           <div className="flex items-center gap-4 mt-4">
+            <button 
+              onClick={evaluateAchievements}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              🏆 结算本期成就
+            </button>
             {import.meta.env.DEV && (
               <button 
                 onClick={testAchievement}

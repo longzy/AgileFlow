@@ -9,6 +9,7 @@ import { setupProxy } from "./server/utils/proxy";
 import { setupSocket } from "./server/socket";
 import jiraRoutes from "./server/routes/jira";
 import achievementRoutes from "./server/routes/achievements";
+import actionRoutes from "./server/routes/actions";
 
 // Setup Proxy
 setupProxy();
@@ -34,6 +35,7 @@ async function startServer() {
   // API Routes
   app.use("/api/jira", jiraRoutes);
   app.use("/api/achievements", achievementRoutes(io));
+  app.use("/api/actions", actionRoutes(io));
 
   // Vite middleware for development
   if (config.NODE_ENV !== "production") {

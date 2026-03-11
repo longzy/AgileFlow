@@ -1,8 +1,10 @@
 import { RetroRoom, RetroStage } from "@/shared/retro";
 import { useRetroStore } from "../../store/useRetroStore";
+import { useStore } from "../../store/useStore";
 import { Clock, Play, CheckCircle, ArrowRight, Download, Copy, Settings2, Pause, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useConfirm } from "../../context/ConfirmContext";
+import { toast } from "react-hot-toast";
 
 interface RetroHeaderProps {
   room: RetroRoom;
@@ -14,6 +16,7 @@ const STAGES: RetroStage[] = ["WRITING", "REVIEW", "VOTING", "ACTION", "DONE"];
 
 export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   const { changeStage, toggleTimer, deleteRoom, onlineUsers } = useRetroStore();
+  const { selectedGroup } = useStore();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showTimerSettings, setShowTimerSettings] = useState(false);
   const [customMinutes, setCustomMinutes] = useState(5);
@@ -72,10 +75,27 @@ export function RetroHeader({ room, isHost, state }: RetroHeaderProps) {
   };
 
   const handleNextStage = () => {
-    const proceed = () => {
+    const proceed = async () => {
       const currentIndex = STAGES.indexOf(room.stage);
       if (currentIndex < STAGES.length - 1) {
-        changeStage(STAGES[currentIndex + 1]);
+        const nextStage = STAGES[currentIndex + 1];
+        
+        // If moving to DONE, save action items
+        if (nextStage === "DONE" && room.actionPoints && room.actionPoints.length > 0) {
+          try {
+            await fetch(`/api/actions?group=${encodeURIComponent(selectedGroup)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ actionItems: room.actionPoints })
+            });
+            toast.success("Action items saved to board");
+          } catch (err) {
+            console.error("Failed to save action items", err);
+            toast.error("Failed to save action items");
+          }
+        }
+        
+        changeStage(nextStage);
       }
     };
 

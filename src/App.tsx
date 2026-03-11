@@ -11,6 +11,7 @@ import { StandupView } from './components/standup/StandupView';
 import { RetroView } from './components/retro/RetroView';
 import { AchievementWall } from './components/achievements/AchievementWall';
 import { AchievementCelebration } from './components/achievements/AchievementCelebration';
+import { ActionItemBoard } from './components/actions/ActionItemBoard';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { BoardSelectionScreen } from './components/auth/BoardSelectionScreen';
 import { useStore } from './store/useStore';
@@ -41,7 +42,7 @@ export default function App() {
     if (selectedBoard) {
       if (location.pathname === '/planning') {
         fetchBoardData('future');
-      } else if (location.pathname === '/standup' || location.pathname.startsWith('/retro')) {
+      } else if (location.pathname === '/standup' || location.pathname.startsWith('/retro') || location.pathname === '/achievements') {
         fetchBoardData('active');
       }
       // If it's any other path (like '/'), the <Navigate> component will redirect us to '/planning',
@@ -61,6 +62,7 @@ export default function App() {
   const isRetro = location.pathname.startsWith('/retro');
   const isPlanning = location.pathname === '/planning';
   const isAchievements = location.pathname === '/achievements';
+  const isActions = location.pathname === '/actions';
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
@@ -79,7 +81,7 @@ export default function App() {
       <main className="flex-1 flex flex-col relative z-10 bg-white min-w-0 overflow-y-auto">
         <header className="h-16 flex items-center px-8 bg-white border-b border-gray-100 shrink-0">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-            {isStandup ? '每日站会' : isRetro ? '回顾会议' : isPlanning ? '冲刺计划' : isAchievements ? 'Hall of Fame' : 'Agile Studio'}
+            {isStandup ? '每日站会' : isRetro ? '回顾会议' : isPlanning ? '冲刺计划' : isAchievements ? 'Hall of Fame' : isActions ? 'Action Items' : 'Agile Studio'}
           </h2>
           <div className="ml-auto flex items-center gap-2">
             {isStandup && <GroupSelector />}
@@ -107,6 +109,7 @@ export default function App() {
           <Route path="/retro" element={<RetroView />} />
           <Route path="/retro/:roomId" element={<RetroView />} />
           <Route path="/achievements" element={<AchievementWall />} />
+          <Route path="/actions" element={<ActionItemBoard />} />
           <Route path="*" element={<Navigate to="/planning" replace />} />
         </Routes>
 
