@@ -13,7 +13,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({ achievement })
   
   const levelColors = {
     gold: "border-amber-400 bg-amber-50/50 text-amber-700 shadow-amber-100",
-    silver: "border-slate-300 bg-slate-50/50 text-slate-700 shadow-slate-100",
+    silver: "border-zinc-300 bg-zinc-50/50 text-zinc-700 shadow-zinc-100",
     bronze: "border-orange-300 bg-orange-50/50 text-orange-700 shadow-orange-100"
   };
 
@@ -66,7 +66,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({ achievement })
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md",
               achievement.level === 'gold' ? "bg-amber-400" : 
-              achievement.level === 'silver' ? "bg-slate-400" : "bg-orange-400"
+              achievement.level === 'silver' ? "bg-zinc-400" : "bg-orange-400"
             )}>
               <LevelIcon className="w-4 h-4 text-white" />
             </div>
@@ -127,7 +127,7 @@ export const AchievementCard: React.FC<AchievementCardProps> = ({ achievement })
                 className={cn(
                   "h-full rounded-full",
                   achievement.level === 'gold' ? "bg-amber-400" : 
-                  achievement.level === 'silver' ? "bg-slate-400" : "bg-orange-400"
+                  achievement.level === 'silver' ? "bg-zinc-400" : "bg-orange-400"
                 )}
               />
             </div>

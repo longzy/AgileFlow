@@ -80,7 +80,7 @@ export const AchievementWall: React.FC = () => {
                 <div className="w-8 h-8 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center shadow-sm z-30">
                   <Trophy className="w-4 h-4 text-white" />
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-400 border-2 border-white flex items-center justify-center shadow-sm z-20">
+                <div className="w-8 h-8 rounded-full bg-zinc-400 border-2 border-white flex items-center justify-center shadow-sm z-20">
                   <Medal className="w-4 h-4 text-white" />
                 </div>
                 <div className="w-8 h-8 rounded-full bg-orange-400 border-2 border-white flex items-center justify-center shadow-sm z-10">
