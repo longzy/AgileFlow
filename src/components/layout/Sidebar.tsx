@@ -65,6 +65,18 @@ export function Sidebar() {
           <span>Retro</span>
         </NavLink>
         <NavLink
+          to="/actions"
+          className={({ isActive }) => cn(
+            "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+            isActive 
+              ? "bg-gray-900 text-white shadow-lg shadow-gray-900/10" 
+              : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
+          )}
+        >
+          <CheckCircle className="w-5 h-5" />
+          <span>Action Items</span>
+        </NavLink>
+        <NavLink
           to="/achievements"
           className={({ isActive }) => cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
@@ -77,7 +89,7 @@ export function Sidebar() {
           <span>Hall of Fame</span>
         </NavLink>
         <NavLink
-          to="/actions"
+          to="/guide"
           className={({ isActive }) => cn(
             "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
             isActive 
@@ -85,8 +97,8 @@ export function Sidebar() {
               : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
           )}
         >
-          <CheckCircle className="w-5 h-5" />
-          <span>Action Items</span>
+          <Settings className="w-5 h-5" />
+          <span>功能介绍</span>
         </NavLink>
       </nav>
 
