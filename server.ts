@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import path from "path";
 import { createServer as createViteServer } from "vite";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -45,6 +46,10 @@ async function startServer() {
   } else {
     console.log("Running in PRODUCTION mode (Serving dist folder)");
     app.use(express.static("dist"));
+    // SPA Fallback: serve index.html for any unmatched routes
+    app.get("*", (req, res) => {
+      res.sendFile(path.resolve(process.cwd(), "dist", "index.html"));
+    });
   }
 
   httpServer.listen(config.PORT, "0.0.0.0", () => {
