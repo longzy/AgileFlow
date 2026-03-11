@@ -99,11 +99,12 @@ export default function achievementRoutes(io: Server) {
       const group = req.query.group as string || "default";
       const userId = req.query.userId as string;
       
+      console.log(`Fetching achievements for group: ${group}, userId: ${userId}`);
       let data = "{}";
       try {
         data = await fs.readFile(DATA_PATH, "utf-8");
       } catch (e) {
-        // If file doesn't exist, start with empty object
+        console.log("Achievements file missing, initializing...");
         await safeWrite({});
       }
       
@@ -113,9 +114,11 @@ export default function achievementRoutes(io: Server) {
       
       // Migration: If it's an array or old group format (array per group)
       if (Array.isArray(allData)) {
+        console.log("Migrating old array format...");
         allData = { [group]: { team: allData.filter((a: any) => a.scope === 'team'), personal: {} } };
         changed = true;
       } else if (allData[group] && Array.isArray(allData[group])) {
+        console.log(`Migrating old group format for ${group}...`);
         allData[group] = { 
           team: allData[group].filter((a: any) => a.scope === 'team'), 
           personal: {} 
@@ -124,6 +127,7 @@ export default function achievementRoutes(io: Server) {
       }
 
       if (!allData[group]) {
+        console.log(`Initializing new group: ${group}`);
         allData[group] = { team: getTeamTemplates(), personal: {} };
         changed = true;
       }
@@ -139,6 +143,7 @@ export default function achievementRoutes(io: Server) {
       let userPersonal = [];
       if (userId) {
         if (!groupData.personal[userId]) {
+          console.log(`Initializing personal achievements for user: ${userId}`);
           groupData.personal[userId] = getPersonalTemplates();
           changed = true;
         }
@@ -149,6 +154,7 @@ export default function achievementRoutes(io: Server) {
         await safeWrite(allData);
       }
       
+      console.log(`Returning ${teamAchievements.length} team and ${userPersonal.length} personal achievements`);
       res.json([...teamAchievements, ...userPersonal]);
     } catch (error: any) {
       console.error("Error reading achievements:", error);

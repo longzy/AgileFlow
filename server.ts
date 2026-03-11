@@ -36,12 +36,14 @@ async function startServer() {
 
   // Vite middleware for development
   if (config.NODE_ENV !== "production") {
+    console.log("Running in DEVELOPMENT mode (Vite middleware enabled)");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    console.log("Running in PRODUCTION mode (Serving dist folder)");
     app.use(express.static("dist"));
   }
 
