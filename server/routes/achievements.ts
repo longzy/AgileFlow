@@ -9,17 +9,34 @@ export default function achievementRoutes(io: Server) {
   const DATA_DIR = path.join(process.cwd(), "data");
   const DATA_PATH = path.join(DATA_DIR, "achievements.json");
   
+  console.log(`[Achievements] Data directory is set to: ${DATA_DIR}`);
+  console.log(`[Achievements] Data file path is set to: ${DATA_PATH}`);
+  
   // Ensure data directory exists
   if (!fsSync.existsSync(DATA_DIR)) {
+    console.log(`[Achievements] Creating data directory: ${DATA_DIR}`);
     fsSync.mkdirSync(DATA_DIR, { recursive: true });
   }
 
   // Simple lock to prevent concurrent writes
   let writeQueue = Promise.resolve();
   const safeWrite = async (data: any) => {
-    writeQueue = writeQueue.then(async () => {
-      await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2));
-    });
+    writeQueue = writeQueue
+      .then(async () => {
+        try {
+          // Ensure directory exists right before writing, just in case
+          if (!fsSync.existsSync(DATA_DIR)) {
+            fsSync.mkdirSync(DATA_DIR, { recursive: true });
+          }
+          await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2));
+          console.log(`Successfully wrote to ${DATA_PATH}`);
+        } catch (err) {
+          console.error(`Failed to write to ${DATA_PATH}:`, err);
+        }
+      })
+      .catch((err) => {
+        console.error("Write queue error:", err);
+      });
     return writeQueue;
   };
 
