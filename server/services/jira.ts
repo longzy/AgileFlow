@@ -432,117 +432,178 @@ export const getMetricsData = async (boardId: string) => {
   }
 
   try {
-    // --- 1. Velocity Data Aggregation ---
-    // Fetch the last 6 closed sprints for the board
-    const sprintsRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=closed&maxResults=6`, {
-      headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(10000)
-    });
-    
     let velocity = mockMetrics.velocity;
-    if (sprintsRes.ok) {
-      const sprintsData = await sprintsRes.json();
-      const sprints = sprintsData.values || [];
+    let cycleTime = mockMetrics.cycleTime;
+    let burndown = mockMetrics.burndown;
+
+    // --- 1. Velocity Data Aggregation ---
+    try {
+      const sprintsRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=closed&maxResults=6`, {
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(10000)
+      });
       
-      // For a real production app, we would query the issues for each sprint to calculate committed vs completed.
-      // e.g. /rest/agile/1.0/sprint/{sprintId}/issue
-      // Here we simulate the aggregation logic structure:
-      velocity = await Promise.all(sprints.map(async (sprint: any) => {
-        // In a full implementation, we'd fetch issues and sum their story points:
-        // const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${sprint.id}/issue`, { headers });
-        // const issues = await issuesRes.json();
-        // const completed = issues.issues.filter(i => i.fields.status.statusCategory.key === 'done').reduce(...);
+      if (sprintsRes.ok) {
+        const sprintsData = await sprintsRes.json();
+        const sprints = sprintsData.values || [];
         
-        // Using mock calculation based on sprint ID for demonstration
-        const basePoints = 40 + (sprint.id % 20);
-        return {
-          sprint: sprint.name,
-          committed: basePoints,
-          completed: Math.max(0, basePoints - (sprint.id % 10))
-        };
-      }));
+        if (sprints.length > 0) {
+          const velocityData = await Promise.all(sprints.map(async (sprint: any) => {
+            const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${sprint.id}/issue`, { 
+              headers: getJiraHeaders(),
+              signal: AbortSignal.timeout(10000)
+            });
+            
+            if (!issuesRes.ok) return { sprint: sprint.name, committed: 0, completed: 0 };
+            
+            const issuesData = await issuesRes.json();
+            let committed = 0;
+            let completed = 0;
+            
+            (issuesData.issues || []).forEach((issue: any) => {
+              const points = issue.fields.customfield_10106 || 0;
+              committed += points;
+              if (issue.fields.status?.statusCategory?.key === 'done') {
+                completed += points;
+              }
+            });
+            
+            return {
+              sprint: sprint.name,
+              committed,
+              completed
+            };
+          }));
+          velocity = velocityData.reverse(); // Show oldest to newest
+        }
+      }
+    } catch (e) {
+      console.error("Jira Velocity Aggregation Error:", e);
     }
 
     // --- 2. Cycle Time Aggregation ---
-    // Fetch recently resolved issues (e.g., last 30 days) using JQL
-    const jql = `project IN (projectsWhereUserHasPermission()) AND statusCategory = Done AND resolved >= -30d ORDER BY resolved ASC`;
-    const cycleTimeRes = await fetch(`${config.JIRA.BASE_URL}/rest/api/2/search?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=50`, {
-      headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(15000)
-    });
-
-    let cycleTime = mockMetrics.cycleTime;
-    if (cycleTimeRes.ok) {
-      const cycleTimeData = await cycleTimeRes.json();
-      const issues = cycleTimeData.issues || [];
-      
-      cycleTime = issues.map((issue: any) => {
-        const histories = issue.changelog?.histories || [];
-        let inProgressDate = null;
-        let doneDate = new Date(issue.fields.resolutiondate || issue.fields.updated);
-
-        // Parse changelog to find when the issue moved to "In Progress"
-        for (const history of histories) {
-          const statusItem = history.items.find((item: any) => item.field === 'status');
-          if (statusItem && (statusItem.toString === 'In Progress' || statusItem.toString === '开发中')) {
-            inProgressDate = new Date(history.created);
-            break;
-          }
-        }
-
-        // Fallback to creation date if no "In Progress" transition found
-        if (!inProgressDate) {
-          inProgressDate = new Date(issue.fields.created);
-        }
-
-        const cycleTimeDays = Math.max(1, Math.ceil((doneDate.getTime() - inProgressDate.getTime()) / (1000 * 3600 * 24)));
-        
-        return {
-          date: `${doneDate.getMonth() + 1}-${doneDate.getDate().toString().padStart(2, '0')}`,
-          cycleTime: cycleTimeDays,
-          issue: issue.key
-        };
+    try {
+      // Fetch recently resolved issues for this board
+      const jql = `statusCategory = Done AND resolved >= -30d ORDER BY resolved ASC`;
+      const cycleTimeRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/issue?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=50`, {
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(15000)
       });
+
+      if (cycleTimeRes.ok) {
+        const cycleTimeData = await cycleTimeRes.json();
+        const issues = cycleTimeData.issues || [];
+        
+        if (issues.length > 0) {
+          cycleTime = issues.map((issue: any) => {
+            const histories = issue.changelog?.histories || [];
+            let inProgressDate = null;
+            let doneDate = new Date(issue.fields.resolutiondate || issue.fields.updated);
+
+            // Parse changelog to find when the issue moved to "In Progress"
+            for (const history of histories) {
+              const statusItem = history.items.find((item: any) => item.field === 'status');
+              if (statusItem && ['In Progress', '开发中', '处理中', '进行中'].includes(statusItem.toString)) {
+                inProgressDate = new Date(history.created);
+                break;
+              }
+            }
+
+            // Fallback to creation date if no "In Progress" transition found
+            if (!inProgressDate) {
+              inProgressDate = new Date(issue.fields.created);
+            }
+
+            const cycleTimeDays = Math.max(1, Math.ceil((doneDate.getTime() - inProgressDate.getTime()) / (1000 * 3600 * 24)));
+            
+            return {
+              date: `${doneDate.getMonth() + 1}-${doneDate.getDate().toString().padStart(2, '0')}`,
+              cycleTime: cycleTimeDays,
+              issue: issue.key
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Jira Cycle Time Aggregation Error:", e);
     }
 
     // --- 3. Burndown Data Aggregation ---
-    // For burndown, we need the active sprint
-    const activeSprintRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=active`, {
-      headers: getJiraHeaders(),
-      signal: AbortSignal.timeout(10000)
-    });
-    
-    let burndown = mockMetrics.burndown;
-    if (activeSprintRes.ok) {
-      const activeSprintData = await activeSprintRes.json();
-      const activeSprint = activeSprintData.values?.[0];
+    try {
+      const activeSprintRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=active`, {
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(10000)
+      });
       
-      if (activeSprint) {
-        // In a real implementation, we would use the Greenhopper API or parse the changelog of all issues in the sprint
-        // to calculate the daily remaining points.
-        // e.g. /rest/greenhopper/1.0/rapid/charts/scopechangeburndownchart?rapidViewId={boardId}&sprintId={activeSprint.id}
+      if (activeSprintRes.ok) {
+        const activeSprintData = await activeSprintRes.json();
+        const activeSprint = activeSprintData.values?.[0];
         
-        // Since Greenhopper is internal and changelog parsing is extremely complex for a single request,
-        // we return a structured mock based on the sprint dates for now.
-        const startDate = new Date(activeSprint.startDate);
-        const endDate = new Date(activeSprint.endDate);
-        const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)));
-        
-        burndown = Array.from({ length: totalDays }).map((_, i) => {
-          const ideal = Math.max(0, 50 - (50 / totalDays) * i);
-          return {
-            day: `Day ${i + 1}`,
-            ideal: Math.round(ideal),
-            remaining: Math.round(ideal + (Math.random() * 5 - 2)) // Simulated variance
-          };
-        });
+        if (activeSprint) {
+          const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${activeSprint.id}/issue?expand=changelog`, {
+            headers: getJiraHeaders(),
+            signal: AbortSignal.timeout(15000)
+          });
+
+          if (issuesRes.ok) {
+            const issuesData = await issuesRes.json();
+            const issues = issuesData.issues || [];
+
+            const startDate = new Date(activeSprint.startDate);
+            const endDate = new Date(activeSprint.endDate);
+            const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)));
+            
+            let totalPoints = 0;
+            issues.forEach((issue: any) => {
+              totalPoints += (issue.fields.customfield_10106 || 0);
+            });
+
+            const now = new Date();
+            
+            burndown = Array.from({ length: totalDays }).map((_, i) => {
+              const currentDate = new Date(startDate.getTime() + i * 24 * 3600 * 1000);
+              const ideal = Math.max(0, totalPoints - (totalPoints / totalDays) * i);
+              
+              let resolvedPoints = 0;
+              issues.forEach((issue: any) => {
+                const points = issue.fields.customfield_10106 || 0;
+                if (issue.fields.status?.statusCategory?.key === 'done') {
+                  const resolutionDate = new Date(issue.fields.resolutiondate || issue.fields.updated);
+                  // If resolved on or before this day of the sprint
+                  if (resolutionDate <= new Date(currentDate.getTime() + 24 * 3600 * 1000 - 1)) {
+                    resolvedPoints += points;
+                  }
+                }
+              });
+
+              let remaining = totalPoints - resolvedPoints;
+
+              // Do not show remaining line for future days
+              if (currentDate > now && i > 0) {
+                return {
+                  day: `Day ${i + 1}`,
+                  ideal: Math.round(ideal * 10) / 10,
+                  remaining: null
+                };
+              }
+
+              return {
+                day: `Day ${i + 1}`,
+                ideal: Math.round(ideal * 10) / 10,
+                remaining: Math.round(remaining * 10) / 10
+              };
+            });
+          }
+        }
       }
+    } catch (e) {
+      console.error("Jira Burndown Aggregation Error:", e);
     }
 
     return {
-      burndown: burndown.length > 0 ? burndown : mockMetrics.burndown,
-      velocity: velocity.length > 0 ? velocity : mockMetrics.velocity,
-      cycleTime: cycleTime.length > 0 ? cycleTime : mockMetrics.cycleTime
+      burndown,
+      velocity,
+      cycleTime
     };
 
   } catch (error) {
