@@ -1,12 +1,19 @@
 import { Router } from "express";
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
 import { Server } from "socket.io";
 
 export default function achievementRoutes(io: Server) {
   const router = Router();
-  const DATA_PATH = path.join(process.cwd(), "data", "achievements.json");
+  const DATA_DIR = path.join(process.cwd(), "data");
+  const DATA_PATH = path.join(DATA_DIR, "achievements.json");
   
+  // Ensure data directory exists
+  if (!fsSync.existsSync(DATA_DIR)) {
+    fsSync.mkdirSync(DATA_DIR, { recursive: true });
+  }
+
   // Simple lock to prevent concurrent writes
   let writeQueue = Promise.resolve();
   const safeWrite = async (data: any) => {
