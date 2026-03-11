@@ -161,7 +161,7 @@ export const ActionItemBoard: React.FC = () => {
   );
 };
 
-const DroppableColumn = ({ id, title, icon, count, children }: { id: string, title: string, icon: React.ReactNode, count: number, children: React.ReactNode }) => {
+const DroppableColumn: React.FC<{ id: string, title: string, icon: React.ReactNode, count: number, children: React.ReactNode }> = ({ id, title, icon, count, children }) => {
   const { isOver, setNodeRef } = useDroppable({ id });
   
   return (
@@ -185,7 +185,7 @@ const DroppableColumn = ({ id, title, icon, count, children }: { id: string, tit
   );
 };
 
-const DraggableCard = ({ item, users }: { item: RetroActionPoint, users: User[] }) => {
+const DraggableCard: React.FC<{ item: RetroActionPoint, users: User[] }> = ({ item, users }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
     data: { item }
@@ -212,7 +212,7 @@ const DraggableCard = ({ item, users }: { item: RetroActionPoint, users: User[] 
   );
 };
 
-const ActionCard = ({ item, users, isOverlay = false }: { item: RetroActionPoint, users: User[], isOverlay?: boolean }) => {
+const ActionCard: React.FC<{ item: RetroActionPoint, users: User[], isOverlay?: boolean }> = ({ item, users, isOverlay = false }) => {
   const isDone = item.status === 'done';
   const ownerName = users.find(u => u.id === item.owner)?.name || item.owner;
   

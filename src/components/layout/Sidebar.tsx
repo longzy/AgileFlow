@@ -1,4 +1,4 @@
-import { Calendar, LayoutDashboard, Layers, Settings, MessageSquare, Trophy, CheckCircle } from 'lucide-react';
+import { Calendar, LayoutDashboard, Layers, Settings, MessageSquare, Trophy, CheckCircle, BarChart2 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/cn';
@@ -75,6 +75,18 @@ export function Sidebar() {
         >
           <CheckCircle className="w-5 h-5" />
           <span>Action Items</span>
+        </NavLink>
+        <NavLink
+          to="/metrics"
+          className={({ isActive }) => cn(
+            "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium",
+            isActive 
+              ? "bg-gray-900 text-white shadow-lg shadow-gray-900/10" 
+              : "text-gray-500 hover:bg-gray-200/50 hover:text-gray-900"
+          )}
+        >
+          <BarChart2 className="w-5 h-5" />
+          <span>Metrics</span>
         </NavLink>
         <NavLink
           to="/achievements"

@@ -1,5 +1,5 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups } from "../services/jira";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups, getMetricsData } from "../services/jira";
 import { config } from "../config";
 
 const router = express.Router();
@@ -128,6 +128,17 @@ router.get("/board-data", async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch board data" });
+  }
+});
+
+// Get Metrics Data
+router.get("/board/:boardId/metrics", async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const data = await getMetricsData(boardId);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch metrics data" });
   }
 });
 
