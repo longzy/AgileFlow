@@ -23,7 +23,7 @@ export const MetricsView: React.FC = () => {
       if (!selectedBoard) return;
       setIsBurndownLoading(true);
       try {
-        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/burndown`);
+        const res = await fetch(`/api/jira/metrics/burndown/${selectedBoard.id}`);
         if (res.ok) {
           const data = await res.json();
           setBurndownData(data);
@@ -43,7 +43,7 @@ export const MetricsView: React.FC = () => {
       if (!selectedBoard) return;
       setIsVelocityLoading(true);
       try {
-        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/velocity?months=${velocityMonths}`);
+        const res = await fetch(`/api/jira/metrics/velocity/${selectedBoard.id}?months=${velocityMonths}`);
         if (res.ok) {
           const data = await res.json();
           setVelocityData(data);
@@ -63,7 +63,7 @@ export const MetricsView: React.FC = () => {
       if (!selectedBoard) return;
       setIsCycleTimeLoading(true);
       try {
-        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/cycle-time`);
+        const res = await fetch(`/api/jira/metrics/cycle-time/${selectedBoard.id}`);
         if (res.ok) {
           const data = await res.json();
           setCycleTimeData(data);

@@ -4,6 +4,57 @@ import { config } from "../../core/config";
 
 const router = express.Router();
 
+// --- Metrics Routes (Moved to top for priority) ---
+router.get("/metrics/burndown/:boardId", async (req, res) => {
+  const { boardId } = req.params;
+  console.log(`[API] Fetching burndown for board: ${boardId}`);
+  try {
+    const data = await getBurndownData(boardId);
+    res.json(data);
+  } catch (error) {
+    console.error("Burndown Route Error:", error);
+    res.status(500).json({ error: "Failed to fetch burndown data" });
+  }
+});
+
+router.get("/metrics/velocity/:boardId", async (req, res) => {
+  const { boardId } = req.params;
+  const months = parseInt(req.query.months as string) || 6;
+  console.log(`[API] Fetching velocity for board: ${boardId}, months: ${months}`);
+  try {
+    const data = await getVelocityData(boardId, months);
+    res.json(data);
+  } catch (error) {
+    console.error("Velocity Route Error:", error);
+    res.status(500).json({ error: "Failed to fetch velocity data" });
+  }
+});
+
+router.get("/metrics/cycle-time/:boardId", async (req, res) => {
+  const { boardId } = req.params;
+  console.log(`[API] Fetching cycle time for board: ${boardId}`);
+  try {
+    const data = await getCycleTimeData(boardId);
+    res.json(data);
+  } catch (error) {
+    console.error("Cycle Time Route Error:", error);
+    res.status(500).json({ error: "Failed to fetch cycle time data" });
+  }
+});
+
+router.get("/metrics/general/:boardId", async (req, res) => {
+  const { boardId } = req.params;
+  const months = parseInt(req.query.months as string) || 6;
+  console.log(`[API] Fetching general metrics for board: ${boardId}`);
+  try {
+    const data = await getMetricsData(boardId, months);
+    res.json(data);
+  } catch (error) {
+    console.error("General Metrics Route Error:", error);
+    res.status(500).json({ error: "Failed to fetch metrics data" });
+  }
+});
+
 // Get Groups
 router.get("/groups", async (req, res) => {
   try {
@@ -128,57 +179,6 @@ router.get("/board-data", async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch board data" });
-  }
-});
-
-router.get("/board/:boardId/metrics/burndown", async (req, res) => {
-  const { boardId } = req.params;
-  console.log(`Fetching burndown for board: ${boardId}`);
-  try {
-    const data = await getBurndownData(boardId);
-    res.json(data);
-  } catch (error) {
-    console.error("Burndown Route Error:", error);
-    res.status(500).json({ error: "Failed to fetch burndown data" });
-  }
-});
-
-router.get("/board/:boardId/metrics/velocity", async (req, res) => {
-  const { boardId } = req.params;
-  const months = parseInt(req.query.months as string) || 6;
-  console.log(`Fetching velocity for board: ${boardId}, months: ${months}`);
-  try {
-    const data = await getVelocityData(boardId, months);
-    res.json(data);
-  } catch (error) {
-    console.error("Velocity Route Error:", error);
-    res.status(500).json({ error: "Failed to fetch velocity data" });
-  }
-});
-
-router.get("/board/:boardId/metrics/cycle-time", async (req, res) => {
-  const { boardId } = req.params;
-  console.log(`Fetching cycle time for board: ${boardId}`);
-  try {
-    const data = await getCycleTimeData(boardId);
-    res.json(data);
-  } catch (error) {
-    console.error("Cycle Time Route Error:", error);
-    res.status(500).json({ error: "Failed to fetch cycle time data" });
-  }
-});
-
-// Get Metrics Data (General)
-router.get("/board/:boardId/metrics", async (req, res) => {
-  const { boardId } = req.params;
-  const months = parseInt(req.query.months as string) || 6;
-  console.log(`Fetching general metrics for board: ${boardId}`);
-  try {
-    const data = await getMetricsData(boardId, months);
-    res.json(data);
-  } catch (error) {
-    console.error("General Metrics Route Error:", error);
-    res.status(500).json({ error: "Failed to fetch metrics data" });
   }
 });
 
