@@ -20,10 +20,8 @@ async function startServer() {
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
-      methods: ["GET", "POST"],
-      credentials: true
+      methods: ["GET", "POST"]
     },
-    allowEIO3: true,
     transports: ["polling", "websocket"]
   });
 

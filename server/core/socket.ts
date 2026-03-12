@@ -44,11 +44,15 @@ export function setupSocket(io: Server) {
   };
 
   io.on("connection", (socket: Socket) => {
-    console.log("User connected:", socket.id);
+    console.log("[Socket] User connected:", socket.id);
     clients.set(socket.id, { socketId: socket.id });
 
     // Setup retro socket handlers
     setupRetroSocket(io, socket);
+
+    socket.on("error", (err) => {
+      console.error(`[Socket] Error for client ${socket.id}:`, err);
+    });
 
     socket.on("join_room", (roomId) => {
       socket.join(roomId);

@@ -8,18 +8,23 @@ class SocketService {
     
     this.socket = io({
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
       transports: ["polling", "websocket"],
-      withCredentials: true
+      // withCredentials: true // Try removing this to see if it fixes "server error"
     });
     
     this.socket.on("connect", () => {
-      console.log("Connected to WebSocket");
+      console.log("[Socket] Connected to server successfully");
     });
 
     this.socket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
+      console.error("[Socket] Connection error:", error.message);
+      // If polling fails, try forcing websocket
+      if (this.socket && this.socket.io.opts.transports?.includes("polling")) {
+        console.log("[Socket] Polling failed, attempting websocket only...");
+        this.socket.io.opts.transports = ["websocket"];
+      }
     });
 
     this.socket.on("disconnect", (reason) => {

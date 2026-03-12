@@ -98,7 +98,7 @@ export const getCycleTimeData = async (boardId: string) => {
 
           for (const history of histories) {
             const statusItem = history.items.find((item: any) => item.field === 'status');
-            if (statusItem && ['In Progress', '开发中', '处理中', '进行中'].includes(statusItem.toString)) {
+            if (statusItem && ['PROCESSING', 'In Progress', '开发中', '处理中', '进行中'].includes(statusItem.toString)) {
               inProgressDate = new Date(history.created);
               break;
             }
