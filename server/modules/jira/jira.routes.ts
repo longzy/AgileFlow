@@ -4,8 +4,14 @@ import { config } from "../../core/config";
 
 const router = express.Router();
 
-// --- Metrics Routes (Moved to top for priority) ---
-router.get("/metrics/burndown/:boardId", async (req, res) => {
+// --- Test Route ---
+router.get("/ping", (req, res) => {
+  console.log("[API] Ping received");
+  res.json({ message: "pong", timestamp: Date.now() });
+});
+
+// --- Metrics Routes (Flattened for better matching) ---
+router.get("/burndown/:boardId", async (req, res) => {
   const { boardId } = req.params;
   console.log(`[API] Fetching burndown for board: ${boardId}`);
   try {
@@ -17,7 +23,7 @@ router.get("/metrics/burndown/:boardId", async (req, res) => {
   }
 });
 
-router.get("/metrics/velocity/:boardId", async (req, res) => {
+router.get("/velocity/:boardId", async (req, res) => {
   const { boardId } = req.params;
   const months = parseInt(req.query.months as string) || 6;
   console.log(`[API] Fetching velocity for board: ${boardId}, months: ${months}`);
@@ -30,7 +36,7 @@ router.get("/metrics/velocity/:boardId", async (req, res) => {
   }
 });
 
-router.get("/metrics/cycle-time/:boardId", async (req, res) => {
+router.get("/cycle-time/:boardId", async (req, res) => {
   const { boardId } = req.params;
   console.log(`[API] Fetching cycle time for board: ${boardId}`);
   try {
@@ -39,19 +45,6 @@ router.get("/metrics/cycle-time/:boardId", async (req, res) => {
   } catch (error) {
     console.error("Cycle Time Route Error:", error);
     res.status(500).json({ error: "Failed to fetch cycle time data" });
-  }
-});
-
-router.get("/metrics/general/:boardId", async (req, res) => {
-  const { boardId } = req.params;
-  const months = parseInt(req.query.months as string) || 6;
-  console.log(`[API] Fetching general metrics for board: ${boardId}`);
-  try {
-    const data = await getMetricsData(boardId, months);
-    res.json(data);
-  } catch (error) {
-    console.error("General Metrics Route Error:", error);
-    res.status(500).json({ error: "Failed to fetch metrics data" });
   }
 });
 
