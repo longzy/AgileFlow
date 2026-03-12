@@ -7,33 +7,81 @@ import { useStore } from '../../store/useStore';
 
 export const MetricsView: React.FC = () => {
   const { selectedBoard } = useStore();
-  const [metricsData, setMetricsData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [burndownData, setBurndownData] = useState<any>(null);
+  const [velocityData, setVelocityData] = useState<any>(null);
+  const [cycleTimeData, setCycleTimeData] = useState<any>(null);
+  
+  const [isBurndownLoading, setIsBurndownLoading] = useState(false);
+  const [isVelocityLoading, setIsVelocityLoading] = useState(false);
+  const [isCycleTimeLoading, setIsCycleTimeLoading] = useState(false);
+  
   const [velocityMonths, setVelocityMonths] = useState<number>(6);
 
+  // Fetch Burndown
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchBurndown = async () => {
       if (!selectedBoard) return;
-      setIsLoading(true);
+      setIsBurndownLoading(true);
       try {
-        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics?months=${velocityMonths}`);
+        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/burndown`);
         if (res.ok) {
           const data = await res.json();
-          setMetricsData(data);
+          setBurndownData(data);
         }
       } catch (error) {
-        console.error("Failed to fetch metrics:", error);
+        console.error("Failed to fetch burndown:", error);
       } finally {
-        setIsLoading(false);
+        setIsBurndownLoading(false);
       }
     };
+    fetchBurndown();
+  }, [selectedBoard]);
 
-    fetchMetrics();
+  // Fetch Velocity
+  useEffect(() => {
+    const fetchVelocity = async () => {
+      if (!selectedBoard) return;
+      setIsVelocityLoading(true);
+      try {
+        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/velocity?months=${velocityMonths}`);
+        if (res.ok) {
+          const data = await res.json();
+          setVelocityData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch velocity:", error);
+      } finally {
+        setIsVelocityLoading(false);
+      }
+    };
+    fetchVelocity();
   }, [selectedBoard, velocityMonths]);
+
+  // Fetch Cycle Time
+  useEffect(() => {
+    const fetchCycleTime = async () => {
+      if (!selectedBoard) return;
+      setIsCycleTimeLoading(true);
+      try {
+        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics/cycle-time`);
+        if (res.ok) {
+          const data = await res.json();
+          setCycleTimeData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch cycle time:", error);
+      } finally {
+        setIsCycleTimeLoading(false);
+      }
+    };
+    fetchCycleTime();
+  }, [selectedBoard]);
+
+  const isInitialLoading = !burndownData && !velocityData && !cycleTimeData && (isBurndownLoading || isVelocityLoading || isCycleTimeLoading);
 
   return (
     <div className="p-8 w-full max-w-[1600px] mx-auto h-full overflow-y-auto relative">
-      {isLoading && (
+      {isInitialLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-50">
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 border-4 border-gray-200 border-t-indigo-600 rounded-full animate-spin"></div>
@@ -57,18 +105,28 @@ export const MetricsView: React.FC = () => {
 
       <div className="flex flex-col gap-6 pb-8">
         {/* 燃尽图 */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full relative min-h-[400px]">
+          {isBurndownLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl">
+              <div className="w-8 h-8 border-3 border-gray-200 border-t-rose-500 rounded-full animate-spin"></div>
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-6">
             <TrendingDown className="w-5 h-5 text-rose-500" />
             <h2 className="text-lg font-bold text-gray-900">迭代燃尽图 (Sprint Burndown)</h2>
           </div>
           <div className="h-[300px] w-full">
-            <BurndownChart data={metricsData?.burndown} />
+            <BurndownChart data={burndownData} />
           </div>
         </div>
 
         {/* 速率图 */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full relative min-h-[400px]">
+          {isVelocityLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl">
+              <div className="w-8 h-8 border-3 border-gray-200 border-t-emerald-500 rounded-full animate-spin"></div>
+            </div>
+          )}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-emerald-500" />
@@ -98,18 +156,23 @@ export const MetricsView: React.FC = () => {
             </div>
           </div>
           <div className="h-[300px] w-full">
-            <VelocityChart data={metricsData?.velocity} />
+            <VelocityChart data={velocityData} />
           </div>
         </div>
 
         {/* 交付周期控制图 */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full relative min-h-[400px]">
+          {isCycleTimeLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-[1px] z-10 rounded-2xl">
+              <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-6">
             <Clock className="w-5 h-5 text-blue-500" />
             <h2 className="text-lg font-bold text-gray-900">交付周期控制图 (Cycle Time)</h2>
           </div>
           <div className="h-[300px] w-full">
-            <CycleTimeChart data={metricsData?.cycleTime} />
+            <CycleTimeChart data={cycleTimeData} />
           </div>
         </div>
       </div>

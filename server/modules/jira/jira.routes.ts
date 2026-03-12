@@ -1,5 +1,5 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups, getMetricsData } from "./index";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups, getMetricsData, getBurndownData, getVelocityData, getCycleTimeData } from "./index";
 import { config } from "../../core/config";
 
 const router = express.Router();
@@ -140,6 +140,37 @@ router.get("/board/:boardId/metrics", async (req, res) => {
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch metrics data" });
+  }
+});
+
+router.get("/board/:boardId/metrics/burndown", async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const data = await getBurndownData(boardId);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch burndown data" });
+  }
+});
+
+router.get("/board/:boardId/metrics/velocity", async (req, res) => {
+  const { boardId } = req.params;
+  const months = parseInt(req.query.months as string) || 6;
+  try {
+    const data = await getVelocityData(boardId, months);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch velocity data" });
+  }
+});
+
+router.get("/board/:boardId/metrics/cycle-time", async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const data = await getCycleTimeData(boardId);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch cycle time data" });
   }
 });
 
