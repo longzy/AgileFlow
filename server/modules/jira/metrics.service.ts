@@ -1,7 +1,7 @@
 import { config } from "../../core/config";
 import { getJiraHeaders } from "./jira.api";
 
-export const getMetricsData = async (boardId: string) => {
+export const getMetricsData = async (boardId: string, months: number = 6) => {
   // Mock data fallback if Jira is not configured
   const mockMetrics = {
     burndown: [
@@ -50,56 +50,32 @@ export const getMetricsData = async (boardId: string) => {
 
     // --- 1. Velocity Data Aggregation ---
     try {
-      let allSprints: any[] = [];
-      let isLast = false;
-      let startAt = 0;
-      
-      // Fetch all closed sprints to get the most recent ones (cap at 500 to prevent infinite loops)
-      while (!isLast && startAt < 500) {
-        const sprintsRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/board/${boardId}/sprint?state=closed&maxResults=50&startAt=${startAt}`, {
-          headers: getJiraHeaders(),
-          signal: AbortSignal.timeout(10000)
-        });
-        
-        if (!sprintsRes.ok) break;
-        
-        const sprintsData = await sprintsRes.json();
-        allSprints = allSprints.concat(sprintsData.values || []);
-        isLast = sprintsData.isLast === true || (sprintsData.values || []).length === 0;
-        startAt += 50;
-      }
-      
-      // Get the last 10 sprints
-      const sprints = allSprints.slice(-10);
-      
-      if (sprints.length > 0) {
-        const velocityData = await Promise.all(sprints.map(async (sprint: any) => {
-          const issuesRes = await fetch(`${config.JIRA.BASE_URL}/rest/agile/1.0/sprint/${sprint.id}/issue`, { 
-            headers: getJiraHeaders(),
-            signal: AbortSignal.timeout(10000)
-          });
-          
-          if (!issuesRes.ok) return { sprint: sprint.name, committed: 0, completed: 0 };
-          
-          const issuesData = await issuesRes.json();
-          let committed = 0;
-          let completed = 0;
-          
-          (issuesData.issues || []).forEach((issue: any) => {
-            const points = issue.fields.customfield_10106 || 0;
-            committed += points;
-            if (issue.fields.status?.statusCategory?.key === 'done') {
-              completed += points;
-            }
-          });
-          
+      const now = new Date();
+      const beforeDate = now.toISOString();
+      const afterDateObj = new Date();
+      afterDateObj.setMonth(now.getMonth() - months);
+      const afterDate = afterDateObj.toISOString();
+
+      const velocityUrl = `${config.JIRA.BASE_URL}/rest/greenhopper/1.0/rapid/charts/velocity.json?rapidViewId=${boardId}&sprintsFinishedBefore=${encodeURIComponent(beforeDate)}&sprintsFinishedAfter=${encodeURIComponent(afterDate)}&_=${Date.now()}`;
+
+      const velocityRes = await fetch(velocityUrl, {
+        headers: getJiraHeaders(),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (velocityRes.ok) {
+        const velocityData = await velocityRes.json();
+        const sprints = velocityData.sprints || [];
+        const entries = velocityData.velocityStatEntries || {};
+
+        velocity = sprints.map((sprint: any) => {
+          const entry = entries[sprint.id] || {};
           return {
             sprint: sprint.name,
-            committed,
-            completed
+            committed: entry.estimated?.value || 0,
+            completed: entry.completed?.value || 0
           };
-        }));
-        velocity = velocityData; // Already oldest to newest from slice(-10)
+        });
       }
     } catch (e) {
       console.error("Jira Velocity Aggregation Error:", e);

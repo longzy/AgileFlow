@@ -134,8 +134,9 @@ router.get("/board-data", async (req, res) => {
 // Get Metrics Data
 router.get("/board/:boardId/metrics", async (req, res) => {
   const { boardId } = req.params;
+  const months = parseInt(req.query.months as string) || 6;
   try {
-    const data = await getMetricsData(boardId);
+    const data = await getMetricsData(boardId, months);
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch metrics data" });

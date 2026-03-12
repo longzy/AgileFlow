@@ -9,13 +9,14 @@ export const MetricsView: React.FC = () => {
   const { selectedBoard } = useStore();
   const [metricsData, setMetricsData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [velocityMonths, setVelocityMonths] = useState<number>(6);
 
   useEffect(() => {
     const fetchMetrics = async () => {
       if (!selectedBoard) return;
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics`);
+        const res = await fetch(`/api/jira/board/${selectedBoard.id}/metrics?months=${velocityMonths}`);
         if (res.ok) {
           const data = await res.json();
           setMetricsData(data);
@@ -28,7 +29,7 @@ export const MetricsView: React.FC = () => {
     };
 
     fetchMetrics();
-  }, [selectedBoard]);
+  }, [selectedBoard, velocityMonths]);
 
   return (
     <div className="p-8 w-full max-w-[1600px] mx-auto h-full overflow-y-auto relative">
@@ -68,9 +69,33 @@ export const MetricsView: React.FC = () => {
 
         {/* 速率图 */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm w-full">
-          <div className="flex items-center gap-2 mb-6">
-            <Activity className="w-5 h-5 text-emerald-500" />
-            <h2 className="text-lg font-bold text-gray-900">团队速率趋势 (Velocity Trend)</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-emerald-500" />
+              <h2 className="text-lg font-bold text-gray-900">团队速率趋势 (Velocity Trend)</h2>
+            </div>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setVelocityMonths(6)}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  velocityMonths === 6
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                最近 6 个月
+              </button>
+              <button
+                onClick={() => setVelocityMonths(12)}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
+                  velocityMonths === 12
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                最近 12 个月
+              </button>
+            </div>
           </div>
           <div className="h-[300px] w-full">
             <VelocityChart data={metricsData?.velocity} />
