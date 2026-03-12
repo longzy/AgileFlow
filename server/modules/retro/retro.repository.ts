@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../shared/retro";
+import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../../shared/retro";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const RETRO_FILE = path.join(DATA_DIR, "retro.json");

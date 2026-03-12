@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { setupRetroSocket } from "./retro";
+import { setupRetroSocket } from "../modules/retro/retro.socket";
 
 interface User {
   id: string;

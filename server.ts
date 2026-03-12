@@ -4,12 +4,12 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { config } from "./server/config";
-import { setupProxy } from "./server/utils/proxy";
-import { setupSocket } from "./server/socket";
-import jiraRoutes from "./server/routes/jira";
-import achievementRoutes from "./server/routes/achievements";
-import actionRoutes from "./server/routes/actions";
+import { config } from "./server/core/config";
+import { setupProxy } from "./server/core/proxy";
+import { setupSocket } from "./server/core/socket";
+import jiraRoutes from "./server/modules/jira/jira.routes";
+import achievementRoutes from "./server/modules/achievements/achievements.routes";
+import actionRoutes from "./server/modules/actions/actions.routes";
 
 // Setup Proxy
 setupProxy();

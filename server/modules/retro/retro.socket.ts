@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
-import { retroRepo } from "../repositories/retro";
-import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../shared/retro";
+import { retroRepo } from "./retro.repository";
+import { RetroRoom, RetroStage, RetroCard, RetroActionPoint } from "../../../shared/retro";
 import crypto from "crypto";
 
 // Run cleanup on startup

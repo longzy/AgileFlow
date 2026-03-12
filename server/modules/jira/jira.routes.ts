@@ -1,6 +1,6 @@
 import express from "express";
-import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups, getMetricsData } from "../services/jira";
-import { config } from "../config";
+import { updateIssueProgress, updateIssuePoints, getBoards, getBoardData, updateIssueStatus, updateIssuePendingStatus, getGroupMembers, assignIssue, updateIssueResolution, getGroups, getMetricsData } from "./index";
+import { config } from "../../core/config";
 
 const router = express.Router();
 
