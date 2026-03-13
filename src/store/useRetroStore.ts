@@ -68,6 +68,17 @@ export const useRetroStore = create<RetroState>((set, get) => ({
       window.dispatchEvent(event);
     });
 
+    const handleConnect = () => {
+      const { room, user } = get();
+      if (room && user) {
+        socketService.retroJoin(room.id, user);
+      }
+    };
+    socketService.on("connect", handleConnect);
+    
+    // Store the handler so we can remove it later
+    set({ _connectHandler: handleConnect } as any);
+
     // Join or create room
     if (isCreating && template) {
       socketService.retroCreate(roomId, user.id, template, user);
@@ -79,7 +90,7 @@ export const useRetroStore = create<RetroState>((set, get) => ({
   },
 
   disconnect: () => {
-    const { room } = get();
+    const { room, _connectHandler } = get() as any;
     if (room) {
       // We don't necessarily want to disconnect the whole socket if other parts of the app use it
       // But for retro, we might want to leave the room
@@ -92,8 +103,11 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     socketService.off("retro:error");
     socketService.off("retro:deleted");
     socketService.off("retro:emoji");
+    if (_connectHandler) {
+      socketService.off("connect", _connectHandler);
+    }
 
-    set({ room: null, user: null, error: null });
+    set({ room: null, user: null, error: null, _connectHandler: undefined } as any);
   },
 
   createRoom: (roomId: string, hostId: string, template: string) => {

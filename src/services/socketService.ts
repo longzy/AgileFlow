@@ -4,7 +4,7 @@ class SocketService {
   private socket: Socket | null = null;
 
   connect() {
-    if (this.socket?.connected) return;
+    if (this.socket) return;
     
     this.socket = io({
       reconnection: true,
@@ -46,8 +46,8 @@ class SocketService {
 
   // Generic emit method
   emit(event: string, data?: any) {
-    if (!this.socket?.connected) {
-      console.warn(`Socket not connected. Cannot emit event: ${event}`);
+    if (!this.socket) {
+      console.warn(`Socket not initialized. Cannot emit event: ${event}`);
       return;
     }
     this.socket.emit(event, data);
