@@ -35,8 +35,6 @@ export function RetroActionStage({ room, isHost }: Props) {
   const handleSave = (actionId: string) => {
     updateAction(actionId, {
       description: editDesc,
-      owner: editOwnerId,
-      dueDate: editDate,
     });
     setEditingId(null);
   };
@@ -108,35 +106,6 @@ export function RetroActionStage({ room, isHost }: Props) {
                             {editDesc.length}/200
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                          <div className="flex-1 relative">
-                            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 w-full focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-                              <User className="w-4 h-4 text-gray-400" />
-                              <select
-                                value={editOwnerId}
-                                onChange={(e) => setEditOwnerId(e.target.value)}
-                                className="flex-1 outline-none text-sm bg-transparent appearance-none cursor-pointer"
-                              >
-                                <option value="">Unassigned</option>
-                                {allUsers.map(user => (
-                                  <option key={user.id} value={user.id}>
-                                    {user.name}
-                                  </option>
-                                ))}
-                              </select>
-                              <ChevronDown className="w-4 h-4 text-gray-400 pointer-events-none absolute right-3" />
-                            </div>
-                          </div>
-                          <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <input 
-                              type="date" 
-                              value={editDate}
-                              onChange={(e) => setEditDate(e.target.value)}
-                              className="flex-1 outline-none text-sm bg-transparent"
-                            />
-                          </div>
-                        </div>
                         <div className="flex justify-end gap-2 pt-2">
                           <button 
                             onClick={() => setEditingId(null)} 
@@ -157,39 +126,9 @@ export function RetroActionStage({ room, isHost }: Props) {
                         className={`${isHost ? 'cursor-pointer' : ''}`}
                         onClick={() => handleEdit(action)}
                       >
-                        <p className={`text-base font-medium mb-4 leading-relaxed ${isDone ? 'line-through text-gray-400' : 'text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
+                        <p className={`text-base font-medium leading-relaxed ${isDone ? 'line-through text-gray-400' : 'text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
                           {action.description}
                         </p>
-                        <div className="flex flex-wrap items-center gap-4 text-sm">
-                          {action.owner ? (
-                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${isDone ? 'bg-gray-100' : 'bg-blue-50'}`}>
-                              <div className="w-5 h-5 rounded-full bg-white overflow-hidden flex items-center justify-center shadow-sm">
-                                {getUserById(action.owner)?.avatar ? (
-                                  <img src={getUserById(action.owner)?.avatar} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                  <span className="text-[10px] font-bold text-gray-500">
-                                    {getUserById(action.owner)?.name?.charAt(0).toUpperCase() || "?"}
-                                  </span>
-                                )}
-                              </div>
-                              <span className={`font-medium ${isDone ? 'text-gray-500' : 'text-blue-700'}`}>
-                                {getUserById(action.owner)?.name || "Unknown User"}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                              <User className="w-3.5 h-3.5 text-gray-400" />
-                              <span className="text-gray-500 font-medium text-xs uppercase tracking-wider">Unassigned</span>
-                            </div>
-                          )}
-                          
-                          {action.dueDate && (
-                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${isDone ? 'bg-gray-100 text-gray-500' : 'bg-orange-50 text-orange-700'}`}>
-                              <Calendar className="w-3.5 h-3.5" />
-                              <span className="font-medium">{action.dueDate}</span>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     )}
                   </div>

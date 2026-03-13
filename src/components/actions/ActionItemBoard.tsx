@@ -12,7 +12,11 @@ export const ActionItemBoard: React.FC = () => {
   const { selectedGroup, users } = useStore();
   const [actionItems, setActionItems] = useState<RetroActionPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [editDesc, setEditDesc] = useState("");
+  const [editOwnerId, setEditOwnerId] = useState("");
+  const [editDate, setEditDate] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -41,25 +45,44 @@ export const ActionItemBoard: React.FC = () => {
     fetchActionItems();
   }, [selectedGroup]);
 
-  const updateItemStatus = async (item: RetroActionPoint, newStatus: 'todo' | 'done') => {
-    if (item.status === newStatus) return;
-    
+  const updateItem = async (item: RetroActionPoint, updates: Partial<RetroActionPoint>) => {
     // Optimistic update
-    setActionItems(prev => prev.map(a => a.id === item.id ? { ...a, status: newStatus } : a));
+    setActionItems(prev => prev.map(a => a.id === item.id ? { ...a, ...updates } : a));
     
     try {
       await fetch(`/api/actions/${item.id}?group=${encodeURIComponent(selectedGroup)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify(updates)
       });
-      toast.success(`已标记为 ${newStatus === 'done' ? '已完成' : '待处理'}`);
+      toast.success("更新成功");
     } catch (error) {
-      console.error("Failed to update status:", error);
+      console.error("Failed to update item:", error);
       // Revert on failure
-      setActionItems(prev => prev.map(a => a.id === item.id ? { ...a, status: item.status } : a));
-      toast.error("状态更新失败，请重试");
+      setActionItems(prev => prev.map(a => a.id === item.id ? { ...a, ...item } : a));
+      toast.error("更新失败，请重试");
     }
+  };
+
+  const handleEdit = (item: RetroActionPoint) => {
+    setEditingId(item.id);
+    setEditDesc(item.description);
+    setEditOwnerId(item.owner || "");
+    setEditDate(item.dueDate || "");
+  };
+
+  const handleSave = (item: RetroActionPoint) => {
+    updateItem(item, {
+      description: editDesc,
+      owner: editOwnerId,
+      dueDate: editDate,
+    });
+    setEditingId(null);
+  };
+
+  const updateItemStatus = async (item: RetroActionPoint, newStatus: 'todo' | 'in-progress' | 'done') => {
+    if (item.status === newStatus) return;
+    updateItem(item, { status: newStatus });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -72,7 +95,7 @@ export const ActionItemBoard: React.FC = () => {
     if (!over) return;
 
     const itemId = active.id as string;
-    const newStatus = over.id as 'todo' | 'done';
+    const newStatus = over.id as 'todo' | 'in-progress' | 'done';
     
     const item = actionItems.find(i => i.id === itemId);
     if (!item || item.status === newStatus) return;
@@ -81,15 +104,16 @@ export const ActionItemBoard: React.FC = () => {
   };
 
   const todoItems = actionItems.filter(item => item.status === 'todo');
+  const inProgressItems = actionItems.filter(item => item.status === 'in-progress');
   const doneItems = actionItems.filter(item => item.status === 'done');
   
   const activeItem = activeId ? actionItems.find(item => item.id === activeId) : null;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto h-full flex flex-col">
+    <div className="p-4 md:p-6 h-full flex flex-col">
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8 shrink-0">
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3 text-indigo-600 mb-2">
+          <div className="flex items-center gap-3 text-gray-900 mb-2">
             <CheckCircle className="w-6 h-6" />
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Action Items</h1>
           </div>
@@ -106,7 +130,7 @@ export const ActionItemBoard: React.FC = () => {
 
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       ) : actionItems.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 rounded-2xl border border-dashed border-gray-200 p-8 text-center">
@@ -126,11 +150,55 @@ export const ActionItemBoard: React.FC = () => {
               count={todoItems.length}
             >
               {todoItems.map(item => (
-                <DraggableCard key={item.id} item={item} users={users} />
+                <DraggableCard 
+                  key={item.id} 
+                  item={item} 
+                  users={users} 
+                  onEdit={() => handleEdit(item)}
+                  isEditing={editingId === item.id}
+                  editDesc={editDesc}
+                  setEditDesc={setEditDesc}
+                  editOwnerId={editOwnerId}
+                  setEditOwnerId={setEditOwnerId}
+                  editDate={editDate}
+                  setEditDate={setEditDate}
+                  onSave={() => handleSave(item)}
+                  onCancel={() => setEditingId(null)}
+                />
               ))}
               {todoItems.length === 0 && (
                 <div className="text-center py-8 text-gray-400 text-sm font-medium">
-                  所有任务都已完成！🎉
+                  暂无任务
+                </div>
+              )}
+            </DroppableColumn>
+
+            <DroppableColumn 
+              id="in-progress" 
+              title="进行中 (In Progress)" 
+              icon={<Calendar className="w-4 h-4 text-blue-500" />} 
+              count={inProgressItems.length}
+            >
+              {inProgressItems.map(item => (
+                <DraggableCard 
+                  key={item.id} 
+                  item={item} 
+                  users={users} 
+                  onEdit={() => handleEdit(item)}
+                  isEditing={editingId === item.id}
+                  editDesc={editDesc}
+                  setEditDesc={setEditDesc}
+                  editOwnerId={editOwnerId}
+                  setEditOwnerId={setEditOwnerId}
+                  editDate={editDate}
+                  setEditDate={setEditDate}
+                  onSave={() => handleSave(item)}
+                  onCancel={() => setEditingId(null)}
+                />
+              ))}
+              {inProgressItems.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm font-medium">
+                  暂无进行中任务
                 </div>
               )}
             </DroppableColumn>
@@ -142,11 +210,25 @@ export const ActionItemBoard: React.FC = () => {
               count={doneItems.length}
             >
               {doneItems.map(item => (
-                <DraggableCard key={item.id} item={item} users={users} />
+                <DraggableCard 
+                  key={item.id} 
+                  item={item} 
+                  users={users} 
+                  onEdit={() => handleEdit(item)}
+                  isEditing={editingId === item.id}
+                  editDesc={editDesc}
+                  setEditDesc={setEditDesc}
+                  editOwnerId={editOwnerId}
+                  setEditOwnerId={setEditOwnerId}
+                  editDate={editDate}
+                  setEditDate={setEditDate}
+                  onSave={() => handleSave(item)}
+                  onCancel={() => setEditingId(null)}
+                />
               ))}
               {doneItems.length === 0 && (
                 <div className="text-center py-8 text-gray-400 text-sm font-medium">
-                  还没有完成的任务
+                  暂无已完成任务
                 </div>
               )}
             </DroppableColumn>
@@ -185,10 +267,24 @@ const DroppableColumn: React.FC<{ id: string, title: string, icon: React.ReactNo
   );
 };
 
-const DraggableCard: React.FC<{ item: RetroActionPoint, users: User[] }> = ({ item, users }) => {
+const DraggableCard: React.FC<{ 
+  item: RetroActionPoint, 
+  users: User[], 
+  onEdit: () => void,
+  isEditing: boolean,
+  editDesc: string,
+  setEditDesc: (val: string) => void,
+  editOwnerId: string,
+  setEditOwnerId: (val: string) => void,
+  editDate: string,
+  setEditDate: (val: string) => void,
+  onSave: () => void,
+  onCancel: () => void
+}> = ({ item, users, onEdit, isEditing, editDesc, setEditDesc, editOwnerId, setEditOwnerId, editDate, setEditDate, onSave, onCancel }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.id,
-    data: { item }
+    data: { item },
+    disabled: isEditing
   });
 
   if (isDragging) {
@@ -205,22 +301,84 @@ const DraggableCard: React.FC<{ item: RetroActionPoint, users: User[] }> = ({ it
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
+      className={isEditing ? "" : "cursor-grab active:cursor-grabbing"}
     >
-      <ActionCard item={item} users={users} />
+      <ActionCard 
+        item={item} 
+        users={users} 
+        onEdit={onEdit}
+        isEditing={isEditing}
+        editDesc={editDesc}
+        setEditDesc={setEditDesc}
+        editOwnerId={editOwnerId}
+        setEditOwnerId={setEditOwnerId}
+        editDate={editDate}
+        setEditDate={setEditDate}
+        onSave={onSave}
+        onCancel={onCancel}
+      />
     </div>
   );
 };
 
-const ActionCard: React.FC<{ item: RetroActionPoint, users: User[], isOverlay?: boolean }> = ({ item, users, isOverlay = false }) => {
+const ActionCard: React.FC<{ 
+  item: RetroActionPoint, 
+  users: User[], 
+  isOverlay?: boolean,
+  onEdit?: () => void,
+  isEditing?: boolean,
+  editDesc?: string,
+  setEditDesc?: (val: string) => void,
+  editOwnerId?: string,
+  setEditOwnerId?: (val: string) => void,
+  editDate?: string,
+  setEditDate?: (val: string) => void,
+  onSave?: () => void,
+  onCancel?: () => void
+}> = ({ item, users, isOverlay = false, onEdit, isEditing, editDesc, setEditDesc, editOwnerId, setEditOwnerId, editDate, setEditDate, onSave, onCancel }) => {
   const isDone = item.status === 'done';
+  const isInProgress = item.status === 'in-progress';
   const ownerName = users.find(u => u.id === item.owner)?.name || item.owner;
   
+  if (isEditing) {
+    return (
+      <div className="bg-white p-4 rounded-xl border border-gray-300 shadow-lg space-y-3">
+        <textarea 
+          className="w-full text-sm border border-gray-300 rounded-md p-2"
+          value={editDesc}
+          onChange={(e) => setEditDesc?.(e.target.value)}
+        />
+        <div className="space-y-2">
+          <div className="text-xs text-gray-500">选择负责人</div>
+          <select 
+            className="w-full text-sm border border-gray-300 rounded-md p-2"
+            value={editOwnerId}
+            onChange={(e) => setEditOwnerId?.(e.target.value)}
+          >
+            <option value="">选择负责人</option>
+            {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <div className="text-xs text-gray-500">截止日期</div>
+          <input 
+            type="date"
+            className="w-full text-sm border border-gray-300 rounded-md p-2"
+            value={editDate}
+            onChange={(e) => setEditDate?.(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onCancel} className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5">取消</button>
+          <button onClick={onSave} className="text-sm bg-gray-800 text-white px-3 py-1.5 rounded-md hover:bg-gray-900">保存</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`bg-white p-4 rounded-xl border transition-all ${isOverlay ? 'shadow-2xl scale-105 border-indigo-400 rotate-2' : 'shadow-sm'} ${!isOverlay && isDone ? 'border-gray-200 opacity-75' : ''} ${!isOverlay && !isDone ? 'border-gray-200 hover:border-indigo-300 hover:shadow-md' : ''}`}>
+    <div className={`bg-white p-4 rounded-xl border transition-all ${isOverlay ? 'shadow-2xl scale-105 border-gray-400 rotate-2' : 'shadow-sm'} ${!isOverlay && isDone ? 'border-emerald-200 opacity-75' : ''} ${!isOverlay && !isDone && !isInProgress ? 'border-gray-200 hover:border-gray-300 hover:shadow-md' : ''} ${!isOverlay && isInProgress ? 'border-blue-200' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className={`mt-0.5 shrink-0 ${isDone ? 'text-emerald-500' : 'text-gray-300'}`}>
-          {isDone ? <CheckCircle className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+        <div className={`mt-0.5 shrink-0 ${isDone ? 'text-emerald-600' : isInProgress ? 'text-blue-500' : 'text-gray-300'}`}>
+          {isDone ? <CheckCircle className="w-5 h-5" /> : isInProgress ? <Calendar className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
         </div>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium mb-3 ${isDone ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
@@ -239,11 +397,7 @@ const ActionCard: React.FC<{ item: RetroActionPoint, users: User[], isOverlay?: 
                 <span>{item.dueDate}</span>
               </div>
             )}
-            {(item as any).createdAt && (
-              <span className="text-gray-400 ml-auto">
-                {format(new Date((item as any).createdAt), 'MMM d, yyyy')}
-              </span>
-            )}
+            <button onClick={onEdit} className="ml-auto text-gray-600 hover:text-gray-900">编辑</button>
           </div>
         </div>
       </div>
