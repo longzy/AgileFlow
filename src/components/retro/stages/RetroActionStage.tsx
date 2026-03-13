@@ -3,6 +3,17 @@ import { useRetroStore } from "../../../store/useRetroStore";
 import { CheckCircle, Circle, User, Calendar, ChevronDown, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
+const getColumnColor = (column: string) => {
+  const lower = column.toLowerCase();
+  if (lower.includes('start') || lower.includes('well') || lower.includes('glad')) {
+    return { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
+  }
+  if (lower.includes('stop') || lower.includes('improve') || lower.includes('mad')) {
+    return { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' };
+  }
+  return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
+};
+
 interface Props {
   room: RetroRoom;
   isHost: boolean;
@@ -39,17 +50,6 @@ export function RetroActionStage({ room, isHost }: Props) {
     setEditingId(null);
   };
 
-  const toggleStatus = (actionId: string, currentStatus: string) => {
-    if (!isHost) return;
-    updateAction(actionId, {
-      status: currentStatus === "todo" ? "done" : "todo"
-    });
-  };
-
-  const getUserById = (userId: string) => {
-    return allUsers.find(u => u.id === userId);
-  };
-
   return (
     <div className="h-full flex flex-col max-w-4xl mx-auto w-full min-h-0">
       <div className="mb-8">
@@ -70,6 +70,10 @@ export function RetroActionStage({ room, isHost }: Props) {
           ) : (
             room.actionPoints.map(action => {
               const isDone = action.status === "done";
+              const card = room.cards.find(c => c.id === action.cardId);
+              const column = card?.column || "General";
+              const colors = getColumnColor(column);
+
               return (
                 <div 
                   key={action.id} 
@@ -77,20 +81,8 @@ export function RetroActionStage({ room, isHost }: Props) {
                     isDone 
                       ? "bg-emerald-50/30 border-emerald-100" 
                       : "bg-white border-gray-100 shadow-sm hover:shadow-md"
-                  } flex gap-4 items-start group`}
+                  } flex items-start group`}
                 >
-                  <button 
-                    onClick={() => toggleStatus(action.id, action.status)}
-                    disabled={!isHost}
-                    className={`mt-1 flex-shrink-0 transition-transform ${isHost ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
-                  >
-                    {isDone ? (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                    ) : (
-                      <Circle className="w-6 h-6 text-gray-300 group-hover:text-gray-400 transition-colors" />
-                    )}
-                  </button>
-                  
                   <div className="flex-1 min-w-0">
                     {editingId === action.id ? (
                       <div className="space-y-4">
@@ -126,6 +118,11 @@ export function RetroActionStage({ room, isHost }: Props) {
                         className={`${isHost ? 'cursor-pointer' : ''}`}
                         onClick={() => handleEdit(action)}
                       >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}>
+                            {column}
+                          </span>
+                        </div>
                         <p className={`text-base font-medium leading-relaxed ${isDone ? 'line-through text-gray-400' : 'text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
                           {action.description}
                         </p>

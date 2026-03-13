@@ -67,7 +67,6 @@ function DraggableCard({ card, room, currentUser, onEdit, isOverlay = false, col
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start gap-2">
-              <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
               <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
             </div>
           </div>

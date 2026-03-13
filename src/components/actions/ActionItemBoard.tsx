@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../../store/useStore';
-import { CheckCircle, Circle, Calendar, User as UserIcon } from 'lucide-react';
+import { CheckCircle, Circle, Calendar, User as UserIcon, Plus } from 'lucide-react';
 import { GroupSelector } from '../common/GroupSelector';
 import { RetroActionPoint } from '../../../shared/retro';
 import { format } from 'date-fns';
@@ -148,6 +148,27 @@ export const ActionItemBoard: React.FC = () => {
               title="待处理 (To Do)" 
               icon={<Circle className="w-4 h-4 text-amber-500" />} 
               count={todoItems.length}
+              onAdd={async () => {
+                const newItem = {
+                  id: crypto.randomUUID(),
+                  description: "新任务",
+                  status: "todo" as const,
+                  group: selectedGroup
+                };
+                setActionItems(prev => [...prev, newItem]);
+                try {
+                  await fetch(`/api/actions?group=${encodeURIComponent(selectedGroup)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newItem)
+                  });
+                  toast.success("任务已创建");
+                } catch (error) {
+                  console.error("Failed to create item:", error);
+                  setActionItems(prev => prev.filter(a => a.id !== newItem.id));
+                  toast.error("创建失败");
+                }
+              }}
             >
               {todoItems.map(item => (
                 <DraggableCard 
@@ -243,22 +264,29 @@ export const ActionItemBoard: React.FC = () => {
   );
 };
 
-const DroppableColumn: React.FC<{ id: string, title: string, icon: React.ReactNode, count: number, children: React.ReactNode }> = ({ id, title, icon, count, children }) => {
+const DroppableColumn: React.FC<{ id: string, title: string, icon: React.ReactNode, count: number, children: React.ReactNode, onAdd?: () => void }> = ({ id, title, icon, count, children, onAdd }) => {
   const { isOver, setNodeRef } = useDroppable({ id });
   
   return (
     <div 
       ref={setNodeRef} 
-      className={`flex-1 flex flex-col bg-gray-50 rounded-2xl border ${isOver ? 'border-indigo-400 bg-indigo-50/50' : 'border-gray-200'} overflow-hidden transition-colors`}
+      className={`flex-1 flex flex-col bg-gray-50 rounded-2xl border ${isOver ? 'border-gray-400 bg-gray-100' : 'border-gray-200'} overflow-hidden transition-colors`}
     >
       <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between">
         <h2 className="font-bold text-gray-900 flex items-center gap-2">
           {icon}
           {title}
         </h2>
-        <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
-          {count}
-        </span>
+        <div className="flex items-center gap-2">
+          {onAdd && (
+            <button onClick={onAdd} className="text-gray-500 hover:text-gray-900">
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
+          <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
+            {count}
+          </span>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {children}
@@ -377,9 +405,6 @@ const ActionCard: React.FC<{
   return (
     <div className={`bg-white p-4 rounded-xl border transition-all ${isOverlay ? 'shadow-2xl scale-105 border-gray-400 rotate-2' : 'shadow-sm'} ${!isOverlay && isDone ? 'border-emerald-200 opacity-75' : ''} ${!isOverlay && !isDone && !isInProgress ? 'border-gray-200 hover:border-gray-300 hover:shadow-md' : ''} ${!isOverlay && isInProgress ? 'border-blue-200' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className={`mt-0.5 shrink-0 ${isDone ? 'text-emerald-600' : isInProgress ? 'text-blue-500' : 'text-gray-300'}`}>
-          {isDone ? <CheckCircle className="w-5 h-5" /> : isInProgress ? <Calendar className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-        </div>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-medium mb-3 ${isDone ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
             {item.description}

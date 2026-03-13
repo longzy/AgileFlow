@@ -114,7 +114,6 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                         <div className="space-y-3">
                           {/* Parent Card */}
                           <div className="flex items-start gap-2">
-                            {!isGroup && <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />}
                             <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
                           </div>
                           
