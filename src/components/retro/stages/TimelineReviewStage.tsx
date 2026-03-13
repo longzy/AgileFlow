@@ -56,22 +56,22 @@ function DraggableCard({ card, room, currentUser, onEdit, isOverlay = false }: {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-gray-800 whitespace-pre-wrap break-words line-clamp-3" title={card.text}>{card.text}</p>
-            <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
-              <span>{card.anonymous ? "Anon" : authorName}</span>
-              {card.authorId === currentUser.id && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(card.id, card.text);
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700"
-                >
-                  <Edit2 className="w-3 h-3" />
-                </button>
-              )}
-            </div>
           </div>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-400">
+          <span>{card.anonymous ? "Anon" : authorName}</span>
+          {card.authorId === currentUser.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(card.id, card.text);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-700"
+            >
+              <Edit2 className="w-3 h-3" />
+            </button>
+          )}
         </div>
       </div>
     </div>

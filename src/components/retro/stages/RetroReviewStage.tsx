@@ -70,24 +70,24 @@ function DraggableCard({ card, room, currentUser, onEdit, isOverlay = false, col
               <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${colors.dot}`} />
               <p className="text-gray-800 whitespace-pre-wrap break-words text-sm leading-relaxed flex-1">{card.text}</p>
             </div>
-            <div className="mt-3 flex items-center justify-between text-[10px]">
-              <span className={`px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
-                {card.anonymous ? "Anonymous" : authorName}
-              </span>
-              {card.authorId === currentUser.id && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent drag start
-                    onEdit(card.id, card.text);
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
           </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between text-[10px]">
+          <span className={`px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}>
+            {card.anonymous ? "Anonymous" : authorName}
+          </span>
+          {card.authorId === currentUser.id && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent drag start
+                onEdit(card.id, card.text);
+              }}
+              onPointerDown={(e) => e.stopPropagation()} // Prevent drag start
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>
