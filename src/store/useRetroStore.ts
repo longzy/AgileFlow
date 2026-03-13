@@ -22,6 +22,7 @@ interface RetroState {
   vote: (cardId: string) => void;
   revokeVote: (cardId: string) => void;
   updateAction: (actionId: string, updates: Partial<RetroActionPoint>) => void;
+  deleteAction: (actionId: string) => void;
   toggleTimer: () => void;
   mergeCards: (sourceCardId: string, targetCardId: string) => void;
   deleteRoom: () => void;
@@ -163,6 +164,13 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     const { room, user } = get();
     if (room && user) {
       socketService.retroUpdateAction(room.id, user.id, actionId, updates);
+    }
+  },
+
+  deleteAction: (actionId: string) => {
+    const { room, user } = get();
+    if (room && user) {
+      socketService.retroDeleteAction(room.id, user.id, actionId);
     }
   },
 

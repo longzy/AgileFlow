@@ -1,6 +1,6 @@
 import { RetroRoom, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
-import { CheckCircle, Circle, User, Calendar, ChevronDown, CheckCircle2 } from "lucide-react";
+import { CheckCircle, Circle, User, Calendar, ChevronDown, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 const getColumnColor = (column: string) => {
@@ -17,10 +17,11 @@ const getColumnColor = (column: string) => {
 interface Props {
   room: RetroRoom;
   isHost: boolean;
+  currentUser: RetroUser;
 }
 
-export function RetroActionStage({ room, isHost }: Props) {
-  const { updateAction, onlineUsers } = useRetroStore();
+export function RetroActionStage({ room, isHost, currentUser }: Props) {
+  const { updateAction, deleteAction, onlineUsers } = useRetroStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDesc, setEditDesc] = useState("");
   const [editOwnerId, setEditOwnerId] = useState("");
@@ -36,7 +37,7 @@ export function RetroActionStage({ room, isHost }: Props) {
   });
 
   const handleEdit = (action: any) => {
-    if (!isHost) return;
+    if (!isHost && action.owner !== currentUser.id) return;
     setEditingId(action.id);
     setEditDesc(action.description);
     setEditOwnerId(action.owner || "");
@@ -48,6 +49,10 @@ export function RetroActionStage({ room, isHost }: Props) {
       description: editDesc,
     });
     setEditingId(null);
+  };
+
+  const handleDelete = (actionId: string) => {
+    deleteAction(actionId);
   };
 
   return (
@@ -73,6 +78,7 @@ export function RetroActionStage({ room, isHost }: Props) {
               const card = room.cards.find(c => c.id === action.cardId);
               const column = card?.column || "General";
               const colors = getColumnColor(column);
+              const canDelete = isHost || action.owner === currentUser.id;
 
               return (
                 <div 
@@ -115,17 +121,29 @@ export function RetroActionStage({ room, isHost }: Props) {
                       </div>
                     ) : (
                       <div 
-                        className={`${isHost ? 'cursor-pointer' : ''}`}
-                        onClick={() => handleEdit(action)}
+                        className="flex items-start justify-between gap-4"
                       >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}>
-                            {column}
-                          </span>
+                        <div 
+                          className={`${isHost || action.owner === currentUser.id ? 'cursor-pointer' : ''} flex-1`}
+                          onClick={() => handleEdit(action)}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${colors.bg} ${colors.text} border ${colors.border}`}>
+                              {column}
+                            </span>
+                          </div>
+                          <p className={`text-base font-medium leading-relaxed ${isDone ? 'line-through text-gray-400' : 'text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
+                            {action.description}
+                          </p>
                         </div>
-                        <p className={`text-base font-medium leading-relaxed ${isDone ? 'line-through text-gray-400' : 'text-gray-900 group-hover:text-blue-600 transition-colors'}`}>
-                          {action.description}
-                        </p>
+                        {canDelete && (
+                          <button 
+                            onClick={() => handleDelete(action.id)}
+                            className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

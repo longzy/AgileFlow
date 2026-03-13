@@ -16,6 +16,7 @@ export interface RetroActionPoint {
   owner?: string;
   dueDate?: string;
   status: "todo" | "in-progress" | "done";
+  creatorId?: string;
 }
 
 export interface RetroUser {

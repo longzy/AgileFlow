@@ -35,7 +35,7 @@ export function RetroRoomView() {
         {state.matches("WRITING") && <RetroWritingStage room={room} currentUser={currentUser} />}
         {state.matches("REVIEW") && <RetroReviewStage room={room} currentUser={currentUser} />}
         {state.matches("VOTING") && <RetroVotingStage room={room} currentUser={currentUser} />}
-        {state.matches("ACTION") && <RetroActionStage room={room} isHost={isHost} />}
+        {state.matches("ACTION") && <RetroActionStage room={room} isHost={isHost} currentUser={currentUser} />}
         {state.matches("DONE") && <RetroDoneStage room={room} />}
       </div>
     </div>

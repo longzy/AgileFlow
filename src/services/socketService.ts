@@ -144,6 +144,10 @@ class SocketService {
     this.emit("retro:update_action", { roomId, userId, actionId, updates });
   }
 
+  retroDeleteAction(roomId: string, userId: string, actionId: string) {
+    this.emit("retro:delete_action", { roomId, userId, actionId });
+  }
+
   retroToggleTimer(roomId: string, userId: string) {
     this.emit("retro:toggle_timer", { roomId, userId });
   }
