@@ -53,7 +53,7 @@ export function RetroActionStage({ room, isHost }: Props) {
   };
 
   return (
-    <div className="h-full flex flex-col max-w-4xl mx-auto w-full">
+    <div className="h-full flex flex-col max-w-4xl mx-auto w-full min-h-0">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-gray-900">Action Points</h2>
         <p className="text-gray-500 text-sm mt-1">Top voted items have been converted to action points.</p>

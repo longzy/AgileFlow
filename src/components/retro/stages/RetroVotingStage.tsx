@@ -72,11 +72,11 @@ export function RetroVotingStage({ room, currentUser }: Props) {
         <p className="text-gray-500 text-sm mt-1">Vote for the most important cards. You have <strong className="text-blue-600 font-bold">{votesRemaining}</strong> votes remaining.</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
         {columns.map(column => {
           const colors = getColumnColor(column);
           return (
-            <div key={column} className="flex flex-col h-full">
+            <div key={column} className="flex flex-col h-full min-h-0">
               <div className="flex items-center gap-2 mb-4 px-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
                 <h3 className="text-lg font-bold text-gray-900">{column}</h3>
@@ -85,7 +85,7 @@ export function RetroVotingStage({ room, currentUser }: Props) {
                 </span>
               </div>
               
-              <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2">
+              <div className="flex-1 overflow-y-auto space-y-4 pb-4 px-2 min-h-0">
                 {parentCards.filter(c => c.column === column).map(card => {
                   const children = cardsByParent[card.id] || [];
                   const hasVoted = userVotes.includes(card.id);

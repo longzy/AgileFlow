@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { RetroRoom, RetroUser } from "@/shared/retro";
 import { useRetroStore } from "../../../store/useRetroStore";
-import { Plus, Edit2, EyeOff } from "lucide-react";
+import { Plus, Edit2, EyeOff, Eye } from "lucide-react";
 import { TimelineWritingStage } from "./TimelineWritingStage";
 
 interface Props {
@@ -55,28 +55,29 @@ export function RetroWritingStage({ room, currentUser }: Props) {
 
   return (
     <div className="h-full flex flex-col min-w-0">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Writing Stage</h2>
           <p className="text-gray-500 text-sm mt-1">Add your thoughts to the columns below.</p>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors">
-          <input
-            type="checkbox"
-            checked={anonymous}
-            onChange={(e) => setAnonymous(e.target.checked)}
-            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-          />
-          <EyeOff className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Anonymous Mode</span>
-        </label>
+        <button
+          onClick={() => setAnonymous(!anonymous)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors border shadow-sm ${
+            anonymous 
+              ? 'bg-gray-900 text-white border-gray-900' 
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          {anonymous ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          Anonymous
+        </button>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
         {columns.map(column => {
           const colors = getColumnColor(column);
           return (
-            <div key={column} className="flex flex-col h-full">
+            <div key={column} className="flex flex-col h-full min-h-0">
               <div className="flex items-center gap-2 mb-4 px-2">
                 <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
                 <h3 className="text-lg font-bold text-gray-900">{column}</h3>

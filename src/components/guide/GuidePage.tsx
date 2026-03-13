@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, LayoutDashboard, MessageSquare, CheckCircle, Trophy } from 'lucide-react';
+import { Layers, LayoutDashboard, MessageSquare, CheckCircle, Trophy, BarChart3 } from 'lucide-react';
 import { FeatureCard } from './FeatureCard';
 
 export const GuidePage: React.FC = () => {
@@ -63,6 +63,18 @@ export const GuidePage: React.FC = () => {
         '丰富的视觉动效与庆祝反馈',
       ],
       color: 'bg-amber-50 border-amber-100',
+    },
+    {
+      id: 'metrics',
+      title: '数据指标 (Metrics)',
+      icon: <BarChart3 className="w-8 h-8 text-rose-500" />,
+      description: '通过多维度的数据可视化，深入洞察团队效能，辅助决策并驱动持续优化。',
+      highlights: [
+        '燃尽图 (Burndown Chart) 实时追踪 Sprint 进度',
+        '团队速率 (Velocity) 洞察长期交付趋势',
+        '交付周期 (Cycle Time) 识别流程瓶颈',
+      ],
+      color: 'bg-rose-50 border-rose-100',
     },
   ];
 

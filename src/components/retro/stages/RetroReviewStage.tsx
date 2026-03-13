@@ -200,11 +200,11 @@ export function RetroReviewStage({ room, currentUser }: Props) {
           </p>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 min-h-0">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 min-h-0">
           {columns.map(column => {
             const colors = getColumnColor(column);
             return (
-              <div key={column} className="flex flex-col h-full">
+              <div key={column} className="flex flex-col h-full min-h-0">
                 <div className="flex items-center gap-2 mb-4 px-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${colors.dot}`} />
                   <h3 className="text-lg font-bold text-gray-900">{column}</h3>

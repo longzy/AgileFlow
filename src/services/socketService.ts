@@ -21,9 +21,10 @@ class SocketService {
     this.socket.on("connect_error", (error) => {
       console.error("[Socket] Connection error:", error.message);
       // If polling fails, try forcing websocket
-      if (this.socket && this.socket.io.opts.transports?.includes("polling")) {
+      const opts = this.socket?.io.opts as any;
+      if (opts?.transports?.includes("polling")) {
         console.log("[Socket] Polling failed, attempting websocket only...");
-        this.socket.io.opts.transports = ["websocket"];
+        opts.transports = ["websocket"];
       }
     });
 
