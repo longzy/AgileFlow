@@ -72,9 +72,15 @@ export function StandupView() {
         const currentIndex = activeIssues.findIndex(i => i.id === currentStandupIssueId);
         const nextIssue = activeIssues[currentIndex + 1];
         if (nextIssue?.assignee) {
-          speak(`Time is up. Next up is ${nextIssue.assignee.name}`);
+          const isChinese = /[\u4e00-\u9fa5]/.test(nextIssue.assignee.name);
+          if (isChinese) {
+            speak(`时间到。下一位是 ${nextIssue.assignee.name}`);
+          } else {
+            speak(`Time is up. Next up is ${nextIssue.assignee.name}`);
+          }
         } else {
-          speak("Time is up. Standup complete.");
+          const isAnyChinese = issues.some(i => /[\u4e00-\u9fa5]/.test(i.assignee?.name || ''));
+          speak(isAnyChinese ? "时间到。站会结束。" : "Time is up. Standup complete.");
         }
       }
     }
