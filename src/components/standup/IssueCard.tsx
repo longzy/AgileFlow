@@ -15,8 +15,18 @@ interface IssueCardProps {
 }
 
 export function IssueCard({ issue, isOverlay }: IssueCardProps) {
-  const { users, assignUser, fetchProjectUsers, selectedBoard } = useStore();
+  const { 
+    users, 
+    assignUser, 
+    fetchProjectUsers, 
+    selectedBoard,
+    currentStandupIssueId,
+    standupTimeLeft,
+    isStandupActive
+  } = useStore();
   const assignee = issue.assignee;
+  const isCurrentStandupIssue = isStandupActive && currentStandupIssueId === issue.id;
+
   const [isAssigneeOpen, setIsAssigneeOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<{
     top?: number;
@@ -156,6 +166,15 @@ export function IssueCard({ issue, isOverlay }: IssueCardProps) {
               : "bg-white border-transparent shadow-sm",
           isDragging && !isOverlay ? "opacity-30" : "hover:shadow-md",
           isOverlay ? "shadow-xl scale-105 rotate-2 cursor-grabbing z-50 ring-1 ring-gray-900/5" : "cursor-grab",
+          // Standup highlighting
+          isCurrentStandupIssue && cn(
+            "scale-[1.08] z-40 ring-2 ring-offset-4 shadow-2xl",
+            standupTimeLeft > 30 
+              ? "border-blue-500 ring-blue-400" 
+              : standupTimeLeft > 10 
+                ? "border-amber-500 ring-amber-400 animate-pulse-border" 
+                : "border-red-500 ring-red-400 animate-pulse-border"
+          )
         )}
       >
         <div className="flex items-start justify-between mb-2 pl-1">

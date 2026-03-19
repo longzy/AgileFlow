@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 // Force UI sync
 import { useStore } from '../../store/useStore';
@@ -8,16 +8,115 @@ import { IssueCard } from './IssueCard';
 import { Issue } from '../../types';
 import { BacklogSidebar } from './BacklogSidebar';
 import { Swimlane, ProgressMarker } from './Swimlane';
+import { Play, Pause, SkipForward, Volume2, VolumeX, StopCircle, Timer } from 'lucide-react';
+import { speak, announceTurn } from '../../utils/voice';
 
 import { playDropSound } from '../../utils/audio';
 import { triggerSuccessConfetti } from '../../utils/effects';
 import { LoadingScreen } from '../common/LoadingScreen';
+import { cn } from '../../utils/cn';
 
 export function StandupView() {
-  const { issues, updateIssueStatus, updateIssueProgress, reorderIssues, isLoading } = useStore();
+  const { 
+    issues, 
+    updateIssueStatus, 
+    updateIssueProgress, 
+    reorderIssues, 
+    isLoading,
+    isStandupActive,
+    currentStandupIssueId,
+    standupTimeLeft,
+    isStandupMuted,
+    isStandupPaused,
+    isStandupTransitioning,
+    startStandup,
+    stopStandup,
+    pauseStandup,
+    resumeStandup,
+    skipStandupIssue,
+    setStandupTimeLeft,
+    toggleStandupMute,
+    nextStandupIssue,
+    setStandupTransitioning
+  } = useStore();
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<any>(null);
   const [focusedUserId, setFocusedUserId] = useState<string | null>(null);
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog' && (i.progress || 0) < 100);
+
+  // Timer logic - Countdown
+  useEffect(() => {
+    if (isStandupActive && !isStandupPaused && !isStandupTransitioning && standupTimeLeft > 0) {
+      timerRef.current = setInterval(() => {
+        setStandupTimeLeft(standupTimeLeft - 1);
+      }, 1000);
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }
+  }, [isStandupActive, isStandupPaused, isStandupTransitioning, standupTimeLeft, setStandupTimeLeft]);
+
+  // Transition trigger - When time is up
+  useEffect(() => {
+    if (standupTimeLeft === 0 && isStandupActive && !isStandupTransitioning) {
+      // Start transition buffer
+      setStandupTransitioning(true);
+      
+      // Announce time is up and who is next
+      if (!isStandupMuted) {
+        const currentIndex = activeIssues.findIndex(i => i.id === currentStandupIssueId);
+        const nextIssue = activeIssues[currentIndex + 1];
+        if (nextIssue?.assignee) {
+          speak(`Time is up. Next up is ${nextIssue.assignee.name}`);
+        } else {
+          speak("Time is up. Standup complete.");
+        }
+      }
+    }
+  }, [standupTimeLeft, isStandupActive, isStandupTransitioning, isStandupMuted, activeIssues, currentStandupIssueId, setStandupTransitioning]);
+
+  // Transition timer - Handles the 4s delay
+  useEffect(() => {
+    if (isStandupTransitioning) {
+      transitionTimerRef.current = setTimeout(() => {
+        nextStandupIssue();
+      }, 4000);
+      return () => {
+        if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+      };
+    }
+  }, [isStandupTransitioning, nextStandupIssue]);
+
+  // Voice announcement logic
+  useEffect(() => {
+    // Only announce "It's your turn" when transitioning back to active (isStandupTransitioning goes false)
+    // OR when the standup just started
+    if (isStandupActive && currentStandupIssueId && !isStandupMuted && !isStandupTransitioning) {
+      const currentIssue = issues.find(i => i.id === currentStandupIssueId);
+      if (currentIssue?.assignee) {
+        // Small delay to let the UI settle
+        const timer = setTimeout(() => {
+          announceTurn(currentIssue.assignee.name);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentStandupIssueId, isStandupActive, isStandupMuted, isStandupTransitioning, issues]);
+
+  // Scroll to current standup issue
+  useEffect(() => {
+    if (isStandupActive && currentStandupIssueId) {
+      const element = document.getElementById(`swimlane-${currentStandupIssueId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [currentStandupIssueId, isStandupActive]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -110,8 +209,8 @@ export function StandupView() {
     }
   };
 
+  const activeIdStr = activeId as string;
   const activeIssue = issues.find(i => i.id === activeId);
-  const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog');
 
   // Get unique assignees from active issues
   const assignees = Array.from(new Set(activeIssues.map(i => i.assignee?.id).filter(Boolean)))
@@ -123,32 +222,104 @@ export function StandupView() {
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <BacklogSidebar issues={issues.filter(i => i.status === 'todo')} />
-        
-        <ActiveArea 
-          issues={activeIssues} 
-          focusedUserId={focusedUserId} 
-          setFocusedUserId={setFocusedUserId}
-          assignees={assignees}
-        />
+    <div className="flex-1 flex flex-col overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <BacklogSidebar issues={issues.filter(i => i.status === 'todo')} />
+          
+          <ActiveArea 
+            issues={activeIssues} 
+            focusedUserId={focusedUserId} 
+            setFocusedUserId={setFocusedUserId}
+            assignees={assignees}
+          />
 
-        <DragOverlay>
-          {activeDragData?.type === 'issue' && activeIssue ? (
-            <IssueCard issue={activeIssue} isOverlay />
-          ) : activeDragData?.type === 'swimlane' ? (
-            <Swimlane issue={activeDragData.issue} isOverlay />
-          ) : activeDragData?.type === 'progress-marker' ? (
-            <ProgressMarker issue={issues.find(i => i.id === activeDragData.issueId)!} step={activeDragData.step} isOverlay />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          <DragOverlay>
+            {activeDragData?.type === 'issue' && activeIssue ? (
+              <IssueCard issue={activeIssue} isOverlay />
+            ) : activeDragData?.type === 'swimlane' ? (
+              <Swimlane issue={activeDragData.issue} isOverlay />
+            ) : activeDragData?.type === 'progress-marker' ? (
+              <ProgressMarker issue={issues.find(i => i.id === activeDragData.issueId)!} step={activeDragData.step} isOverlay />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
+
+      {/* Standup Controls Overlay */}
+      <div className={cn(
+        "absolute bottom-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500",
+        isStandupActive ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0 pointer-events-none"
+      )}>
+        <div className="bg-gray-900 text-white rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-8 border border-white/10 backdrop-blur-xl bg-gray-900/90">
+          <div className="flex items-center gap-4 border-r border-white/10 pr-8">
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+              isStandupTransitioning ? "bg-emerald-500 animate-bounce" :
+              standupTimeLeft <= 10 ? "bg-red-500 animate-pulse" : 
+              standupTimeLeft <= 30 ? "bg-amber-500" : "bg-blue-500"
+            )}>
+              <Timer className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-2xl font-black tabular-nums tracking-tighter min-w-[80px]">
+                {isStandupTransitioning ? "Next..." : `${Math.floor(standupTimeLeft / 60)}:${(standupTimeLeft % 60).toString().padStart(2, '0')}`}
+              </div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                {isStandupTransitioning ? "Preparing" : "Time Left"}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={isStandupPaused ? resumeStandup : pauseStandup}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
+              title={isStandupPaused ? "Resume" : "Pause"}
+            >
+              {isStandupPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={skipStandupIssue}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
+              title="Skip"
+            >
+              <SkipForward className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={toggleStandupMute}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
+              title={isStandupMuted ? "Unmute" : "Mute"}
+            >
+              {isStandupMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={stopStandup}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-500/20 text-red-400 transition-colors ml-2"
+              title="Stop Standup"
+            >
+              <StopCircle className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!isStandupActive && activeIssues.length > 0 && (
+        <button
+          onClick={startStandup}
+          className="absolute bottom-8 right-8 z-40 bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 group"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+            <Play className="w-4 h-4 fill-current" />
+          </div>
+          开始站会
+        </button>
+      )}
     </div>
   );
 }

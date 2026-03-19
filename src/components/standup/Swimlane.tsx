@@ -13,8 +13,15 @@ const STEPS = Array.from({ length: 21 }, (_, i) => i * 5); // 0, 5, 10... 100
 import { IssueTypeTag } from '../common/IssueTypeTag';
 
 export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issue, isOverlay }) => {
-  const { updateIssueStatus } = useStore();
+  const { 
+    updateIssueStatus,
+    currentStandupIssueId,
+    standupTimeLeft,
+    isStandupActive
+  } = useStore();
   const currentProgress = issue.progress || 0;
+  const isCurrentStandupIssue = isStandupActive && currentStandupIssueId === issue.id;
+
   const [displayProgress, setDisplayProgress] = React.useState(currentProgress);
   const isCompleted = currentProgress === 100;
   const isPending = issue.status === 'pending';
@@ -46,16 +53,26 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
   return (
     <div 
       ref={isOverlay ? undefined : setNodeRef}
+      id={`swimlane-${issue.id}`}
       style={style}
       className={cn(
-        "rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-colors relative overflow-hidden border",
+        "rounded-2xl p-4 flex flex-col gap-1 mb-3 transition-all relative border", // Removed overflow-hidden
         isCompleted 
           ? "bg-emerald-50/50 border-emerald-200 shadow-sm" 
           : isPending
             ? "bg-amber-50/50 border-amber-200 shadow-sm opacity-80"
             : "bg-[#F9F9F9] border-transparent",
         isDragging && !isOverlay ? "opacity-50" : "",
-        isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100"
+        isOverlay && "shadow-xl rotate-1 scale-105 cursor-grabbing bg-white border border-gray-100",
+        // Standup highlighting
+        isCurrentStandupIssue && cn(
+          "scale-[1.04] z-40 ring-2 ring-offset-4 shadow-2xl",
+          standupTimeLeft > 30 
+            ? "border-blue-500 ring-blue-400" 
+            : standupTimeLeft > 10 
+              ? "border-amber-500 ring-amber-400 animate-pulse-border" 
+              : "border-red-500 ring-red-400 animate-pulse-border"
+        )
       )}
     >
       <div className="flex justify-between items-center">
@@ -75,11 +92,11 @@ export const Swimlane: React.FC<{ issue: Issue, isOverlay?: boolean }> = ({ issu
           
           <IssueTypeTag type={issue.type} />
 
-          <span className="text-xs font-bold text-gray-900 tracking-tight">
+          <span className="text-xs font-bold text-gray-600 tracking-tight">
             {issue.key}
           </span>
           {/* truncate min-w-0 flex-1 */}
-          <span className="text-gray-600 font-medium text-sm truncate min-w-0 flex-1" title={issue.summary}>{issue.summary}</span>
+          <span className="text-gray-900 font-bold text-sm truncate min-w-0 flex-1" title={issue.summary}>{issue.summary}</span>
         </div>
           
         <span className={cn(

@@ -26,4 +26,10 @@
     0% { transform: translateX(100px); opacity: 0; }
     100% { transform: translateX(0); opacity: 1; }
   }
+
+  @keyframes pulse-border {
+    0%, 100% { border-color: inherit; }
+    50% { border-color: transparent; }
+  }
+  --animate-pulse-border: pulse-border 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
