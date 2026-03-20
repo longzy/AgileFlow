@@ -46,6 +46,7 @@ export function StandupView() {
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAnnouncedIssueId = useRef<string | null>(null);
 
   const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog' && (i.progress || 0) < 100);
 
@@ -74,7 +75,7 @@ export function StandupView() {
         if (nextIssue?.assignee) {
           const isChinese = /[\u4e00-\u9fa5]/.test(nextIssue.assignee.name);
           if (isChinese) {
-            speak(`时间到。下一位是 ${nextIssue.assignee.name}`);
+            speak(`时间到。接下来，有请 ${nextIssue.assignee.name}`);
           } else {
             speak(`Time is up. Next up is ${nextIssue.assignee.name}`);
           }
@@ -100,16 +101,25 @@ export function StandupView() {
 
   // Voice announcement logic
   useEffect(() => {
+    if (!isStandupActive) {
+      lastAnnouncedIssueId.current = null;
+      return;
+    }
+
     // Only announce "It's your turn" when transitioning back to active (isStandupTransitioning goes false)
     // OR when the standup just started
     if (isStandupActive && currentStandupIssueId && !isStandupMuted && !isStandupTransitioning) {
-      const currentIssue = issues.find(i => i.id === currentStandupIssueId);
-      if (currentIssue?.assignee) {
-        // Small delay to let the UI settle
-        const timer = setTimeout(() => {
-          announceTurn(currentIssue.assignee.name);
-        }, 800);
-        return () => clearTimeout(timer);
+      // Prevent re-announcing if the issue hasn't changed (e.g., when progress updates)
+      if (lastAnnouncedIssueId.current !== currentStandupIssueId) {
+        const currentIssue = issues.find(i => i.id === currentStandupIssueId);
+        if (currentIssue?.assignee) {
+          lastAnnouncedIssueId.current = currentStandupIssueId;
+          // Small delay to let the UI settle
+          const timer = setTimeout(() => {
+            announceTurn(currentIssue.assignee.name);
+          }, 800);
+          return () => clearTimeout(timer);
+        }
       }
     }
   }, [currentStandupIssueId, isStandupActive, isStandupMuted, isStandupTransitioning, issues]);

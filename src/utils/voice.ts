@@ -19,8 +19,8 @@ export function speak(text: string) {
 export function announceTurn(name: string) {
   const isChinese = /[\u4e00-\u9fa5]/.test(name);
   if (isChinese) {
-    speak(`${name}，轮到你了。`);
+    speak(`接下来，有请 ${name}`);
   } else {
-    speak(`${name}, it's your turn.`);
+    speak(`Next up, ${name}.`);
   }
 }
