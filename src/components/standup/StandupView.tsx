@@ -48,7 +48,7 @@ export function StandupView() {
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastAnnouncedIssueId = useRef<string | null>(null);
 
-  const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog' && (i.progress || 0) < 100);
+  const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog');
 
   // Timer logic - Countdown
   useEffect(() => {
