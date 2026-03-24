@@ -71,12 +71,16 @@ export const createStandupSlice: StateCreator<AppState, [], [], StandupSlice> = 
 
   nextStandupIssue: () => {
     const { issues, currentStandupIssueId } = get();
-    const activeIssues = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog' && (i.progress || 0) < 100);
-    const currentIndex = activeIssues.findIndex(i => i.id === currentStandupIssueId);
+    // Candidates are all issues in the active area (not todo/backlog)
+    const candidates = issues.filter(i => i.status !== 'todo' && i.status !== 'backlog');
+    const currentIndex = candidates.findIndex(i => i.id === currentStandupIssueId);
     
-    if (currentIndex < activeIssues.length - 1) {
+    // Find the next issue in the list that is not yet completed
+    const nextIncompleteIssue = candidates.slice(currentIndex + 1).find(i => (i.progress || 0) < 100);
+    
+    if (nextIncompleteIssue) {
       set({
-        currentStandupIssueId: activeIssues[currentIndex + 1].id,
+        currentStandupIssueId: nextIncompleteIssue.id,
         standupTimeLeft: 120,
         isStandupTransitioning: false,
       });

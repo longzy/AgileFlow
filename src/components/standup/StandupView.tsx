@@ -71,7 +71,7 @@ export function StandupView() {
       // Announce time is up and who is next
       if (!isStandupMuted) {
         const currentIndex = activeIssues.findIndex(i => i.id === currentStandupIssueId);
-        const nextIssue = activeIssues[currentIndex + 1];
+        const nextIssue = activeIssues.slice(currentIndex + 1).find(i => (i.progress || 0) < 100);
         if (nextIssue?.assignee) {
           const isChinese = /[\u4e00-\u9fa5]/.test(nextIssue.assignee.name);
           if (isChinese) {
